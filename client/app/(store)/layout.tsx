@@ -1,3 +1,6 @@
+import Banner from "@/app/components/Banner";
+import Navbar from "@/app/components/Navbar";
+
 export default function StoreLayout({
     children,
 }: {
@@ -5,8 +8,8 @@ export default function StoreLayout({
 }) {
     return (
         <>
-            <p>banner</p>
-            <p>navbar</p>
+            <Banner />
+            <Navbar />
             <main className="min-h-screen">
                 {children}
             </main>
