@@ -1,8 +1,10 @@
-import React from 'react'
+import Hero from '@/app/components/home/Hero'
 
 const page = () => {
     return (
-        <div>page</div>
+        <div className='min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+            <Hero />
+        </div>
     )
 }
 
