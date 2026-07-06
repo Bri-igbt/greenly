@@ -1,5 +1,7 @@
 import Banner from "@/app/components/Banner";
 import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/components/Footer";
+
 
 export default function StoreLayout({
     children,
@@ -13,7 +15,7 @@ export default function StoreLayout({
             <main className="min-h-screen">
                 {children}
             </main>
-            <p>footer</p>
+            <Footer />
             <p>cartsidebar</p>
         </>
     );

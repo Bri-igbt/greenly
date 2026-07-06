@@ -51,7 +51,7 @@ export const appPromoBannerData = {
 
 export const footerData = {
     brand: {
-        name: "Instacart",
+        name: "Greenly",
         description: "Bringing fresh, organic groceries straight from local farms to your doorstep. Nourish your home with Earth's finest.",
         socials: [
             { icon: SiFacebook, link: "#" },
@@ -64,18 +64,18 @@ export const footerData = {
         {
             title: "Quick Links",
             links: [
-                { label: "All Products", to: "/products" },
-                { label: "Flash Deals", to: "/deals" },
-                { label: "Track Order", to: "/orders" },
-                { label: "Delivery Partner", to: "/delivery" },
+                { label: "All Products", href: "/products" },
+                { label: "Flash Deals", href: "/deals" },
+                { label: "Track Order", href: "/orders" },
+                { label: "Delivery Partner", href: "/delivery" },
             ],
         },
         {
             title: "Customer Service",
             links: [
-                { label: "My Account", to: "#" },
-                { label: "Order History", to: "#" },
-                { label: "Addresses", to: "#" },
+                { label: "My Account", href: "#" },
+                { label: "Order History", href: "#" },
+                { label: "Addresses", href: "#" },
                 { label: "Help Center", href: "#" },
             ],
         },

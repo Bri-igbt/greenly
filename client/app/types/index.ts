@@ -87,3 +87,7 @@ export interface Order {
     isPaid: boolean;
     createdAt: string;
 }
+
+export interface Props {
+    product: Product
+}
