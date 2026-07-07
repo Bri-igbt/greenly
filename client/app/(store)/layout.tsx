@@ -1,6 +1,7 @@
 import Banner from "@/app/components/Banner";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import CartSideBar from "@/app/components/CartSideBar";
 
 
 export default function StoreLayout({
@@ -16,7 +17,7 @@ export default function StoreLayout({
                 {children}
             </main>
             <Footer />
-            <p>cartsidebar</p>
+            <CartSideBar />
         </>
     );
 }

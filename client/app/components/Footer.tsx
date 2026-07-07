@@ -50,10 +50,30 @@ const Footer = () => {
                         </div>
                     ))}
 
+                    <div>
+                        <h3 className="text-sm font-semibold uppercase mb-4">Contact Us</h3>
+                        <ul className="space-y-3">
+                            {footerData.contact.map((item, i)=> {
+                                const Icon = item.icon;
+                                return (
+                                    <li key={i} className="flex gap-3 text-sm text-white/70">
+                                        <Icon className="text-white size-4" />
+                                        {item.text}
+                                    </li>
+                                )
+                            })}
+                        </ul>
+                    </div>
                 </div>
 
-                <div>
+                <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <p className="text-xs text-white/50"> {footerData.bottom.copyright}</p>
 
+                    <div className="flex gap-4">
+                        {footerData.bottom.links.map((link, i) => (
+                            <a href={link.href} key={i} className="text-xs text-white/50 hover:text-white/70">{link.label}</a>
+                        ))}
+                    </div>
                 </div>
             </div>
         </footer>
