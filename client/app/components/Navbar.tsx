@@ -4,6 +4,7 @@ import { ArrowUpRightIcon, BikeIcon, ChevronDownIcon, LogOutIcon, MapPinIcon, Me
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useCart } from "../context/CartContext";
 
 const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -11,10 +12,7 @@ const Navbar = () => {
     const router = useRouter();
 
     const user: any = { name: "Bright", email: "bright@gmail.com", isAdmin: true}
-    const { cartCount, setIsCartOpen} = {
-        cartCount: 5,
-        setIsCartOpen: (_data: any) => {} 
-    };
+    const { cartCount, setIsCartOpen} = useCart()
 
     const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();

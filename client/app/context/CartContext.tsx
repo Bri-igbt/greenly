@@ -30,7 +30,7 @@ export function CartProvider({
     children: ReactNode;
 }) {
     const [items, setItems] = useState<CartItem[]>([]);
-    const [isCartOpen, setIsCartOpen] = useState(true);
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     const hasLoaded = useRef(false);
 

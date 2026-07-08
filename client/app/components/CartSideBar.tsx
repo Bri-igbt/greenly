@@ -48,6 +48,8 @@ const CartSideBar = () => {
                                     src={item.product.image} 
                                     alt={item.product.name}
                                     className='size-16 rounded-lg object-cover shrink-0'
+                                    width={400}
+                                    height={400}
                                 />
 
                                 <div className='flex-1 min-w-0'>
