@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import type { Product } from "../types";
 import { StarIcon, ThumbsUpIcon } from "lucide-react";
+import { Product } from "@/app/types";
 
 /* ─── Dummy Reviews Section ─── */
 const REVIEWERS = [
@@ -51,11 +51,10 @@ export default function DummyReviewsSection({ product }: { product: Product }) {
         });
     }, [product]);
 
-    // Rating breakdown
     const breakdown = useMemo(() => {
         const counts = [0, 0, 0, 0, 0];
         reviews.forEach((r) => counts[r.rating - 1]++);
-        return counts.reverse(); // 5→1
+        return counts.reverse();
     }, [reviews]);
 
     const maxCount = Math.max(...breakdown, 1);
@@ -96,7 +95,7 @@ export default function DummyReviewsSection({ product }: { product: Product }) {
                 <div className="space-y-6">
                     {reviews.map((review) => (
                         <div key={review.id} className="flex gap-4">
-                            <div className="size-10 rounded-full bg-app-green/10 text-app-green flex-center shrink-0 text-sm font-semibold">
+                            <div className="size-10 rounded-full bg-app-green/10  flex-center shrink-0 text-sm font-semibold">
                                 {review.avatar}
                             </div>
                             <div className="flex-1 min-w-0">
