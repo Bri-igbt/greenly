@@ -64,10 +64,10 @@ export interface DeliveryPartner {
     name: string;
     email: string;
     phone: string;
-    avatar: string;
-    vehicleType: "bike" | "scooter" | "car";
-    isActive: boolean;
-    createdAt: string;
+    avatar?: string;
+    vehicleType?: "bike" | "scooter" | "car";
+    isActive?: boolean;
+    createdAt?: string;
 }
 
 export interface Order {

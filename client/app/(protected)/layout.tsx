@@ -1,16 +1,23 @@
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import Banner from "@/app/components/Banner";
+import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/components/Footer";
+import CartSideBar from "@/app/components/CartSideBar";
 
-export default async function ProtectedLayout({
+
+export default function StoreLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
-    const token = (await cookies()).get("token");
-
-    if (!token) {
-        redirect("/login");
-    }
-
-    return <>{children}</>;
+    return (
+        <>
+            <Banner />
+            <Navbar />
+            <main className="min-h-screen">
+                {children}
+            </main>
+            <Footer />
+            <CartSideBar />
+        </>
+    );
 }
