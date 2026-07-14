@@ -5,11 +5,11 @@ import type { Order } from "@/app/types";
 import { dummyDashboardOrdersData } from "@/assets/assets";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import Loading from "@/app/components/Loading";
-import { CalendarIcon, ChevronRightIcon, Loader2Icon, PackageIcon } from "lucide-react";
+import { CalendarIcon, ChevronRightIcon, PackageIcon } from "lucide-react";
 import Link from "next/link";
 import Loader from "@/app/components/Loader";
 import { statusColors } from "@/app/utils/data";
+import Image from "next/image";
 
 const Page = () => {
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
@@ -106,12 +106,36 @@ const Page = () => {
                                         </span>
                                         <ChevronRightIcon className="size-4 text-app-text-light" />
                                     </div>
-
                                 </div>
 
-                                <div></div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    {order.items.slice(0,4).map((item, i)=> (
+                                        <Image 
+                                            key={i}
+                                            src={item.image} 
+                                            alt={item.name} 
+                                            className="size-12 sm:size-16 rounded-lg object-cover border border-app-border" 
+                                            width={1}
+                                            height={1}
+                                        />
+                                    ))}
 
-                                <div></div>
+                                    {order.items.length > 4 && (
+                                        <div className="size-12 sm:size-16 rounded-lg bg-app-cream flex-center text-xs font-semibold">
+                                            +{order.items.length - 4}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-between items-center pt-3">
+                                    <span className="text-app-text-light">
+                                        {order.items.length} items
+                                    </span>
+
+                                    <span className="font-semibold text-app-green">
+                                        {currency}{order.total.toFixed(2)}
+                                    </span>
+                                </div>
                             </Link>
                         ))}
                     </div>
