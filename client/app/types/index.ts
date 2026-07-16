@@ -66,7 +66,7 @@ export interface DeliveryPartner {
     phone: string;
     avatar?: string;
     vehicleType?: "bike" | "scooter" | "car";
-    isActive?: boolean;
+    isActive: boolean;
     createdAt?: string;
 }
 
