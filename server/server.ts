@@ -5,8 +5,8 @@ import authRoutes from "./routes/authRoutes";
 import productRouter from "./routes/productRoutes";
 import uplaodRouter from "./routes/uploadRoutes";
 import orderRouter from "./routes/orderRoutes";
-
 import { serve } from "inngest/express";
+
 import { inngest, functions } from "./inngest/index"
 
 const app = express();
