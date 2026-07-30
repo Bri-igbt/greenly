@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
+    "postinstall": "npx prisma generate",
     "server": "nodemon --files --exec ts-node server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
