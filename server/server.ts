@@ -9,6 +9,7 @@ import { serve } from "inngest/express";
 
 import { inngest, functions } from "./inngest/index"
 import addressRouter from "./routes/addressRoutes";
+import deliveryPartnerRouter from "./routes/deliveryPartnerRoutes";
 
 const app = express();
 
@@ -25,9 +26,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRouter);
 app.use("/api/upload", uplaodRouter);
 app.use("/api/orders", orderRouter);
-// INNGEST
 app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/addresses", addressRouter)
+app.use("/api/delivery", deliveryPartnerRouter)
 
 //Error Handling
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {

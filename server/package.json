@@ -7,14 +7,15 @@
     "postinstall": "npx prisma generate",
     "server": "nodemon --files --exec ts-node server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed": "ts-node seed.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
-    "@prisma/adapter-neon": "^6.16.3",
+    "@prisma/adapter-neon": "^6.19.3",
     "@prisma/client": "^6.16.3",
     "bcrypt": "^6.0.0",
     "cloudinary": "^2.10.0",
