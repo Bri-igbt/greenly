@@ -34,7 +34,6 @@ export function CartProvider({
 
     const hasLoaded = useRef(false);
 
-    // Load cart once
     useEffect(() => {
         try {
         const saved = localStorage.getItem("app_cart");
@@ -49,7 +48,6 @@ export function CartProvider({
         hasLoaded.current = true;
     }, []);
 
-    // Save whenever cart changes
     useEffect(() => {
         if (!hasLoaded.current) return;
 

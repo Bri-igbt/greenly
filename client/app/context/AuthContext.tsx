@@ -17,33 +17,47 @@ interface AuthContextType {
     user: User | null;
     token: string | null;
     loading: boolean;
-    login: (email: string, password: string) => Promise<void>;
+
+    login: (
+        email: string,
+        password: string
+    ) => Promise<void>;
+
     register: (
         name: string,
         email: string,
         password: string
     ) => Promise<void>;
+
     logout: () => void;
+
     updateUser: (userData: Partial<User>) => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(
+    undefined
+);
 
 interface AuthProviderProps {
     children: ReactNode;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-    const router = useRouter()
+export function AuthProvider({
+    children,
+}: AuthProviderProps) {
+    const router = useRouter();
+
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Load saved authentication data
     useEffect(() => {
         try {
-            const savedToken = localStorage.getItem("auth_token");
-            const savedUser = localStorage.getItem("auth_user");
+            const savedToken =
+                localStorage.getItem("auth_token");
+
+            const savedUser =
+                localStorage.getItem("auth_user");
 
             if (savedToken) {
                 setToken(savedToken);
@@ -53,34 +67,77 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 setUser(JSON.parse(savedUser));
             }
         } catch (error) {
-            console.error("Failed to load authentication data:", error);
+            console.error(
+                "Failed to load authentication data:",
+                error
+            );
 
             localStorage.removeItem("auth_token");
             localStorage.removeItem("auth_user");
+
+            setToken(null);
+            setUser(null);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // Login
     const login = async (
         email: string,
         password: string
-    )=> {
+    ): Promise<void> => {
         try {
-            const {data} = await api.post('/auth/login', {email, password})
-            setUser(data.user);
-            setToken(data.token)
-            localStorage.setItem("auth_token", data.token)
-            localStorage.setItem("auth_user", JSON.stringify(data.user))
-            toast.success("Login successful")
-            router.push('/')
+            setLoading(true);
+
+            const { data } = await api.post(
+                "/auth/login",
+                {
+                    email,
+                    password,
+                }
+            );
+
+            const authUser = data.user;
+            const authToken = data.token;
+
+            if (!authUser || !authToken) {
+                throw new Error(
+                    "Invalid login response from server"
+                );
+            }
+
+            setUser(authUser);
+            setToken(authToken);
+
+            localStorage.setItem(
+                "auth_token",
+                authToken
+            );
+
+            localStorage.setItem(
+                "auth_user",
+                JSON.stringify(authUser)
+            );
+
+            toast.success("Login successful");
+
+            router.replace("/");
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || error?.message)
+            console.error("Login error:", error);
+
+            const message =
+                error?.response?.data?.message ||
+                error?.message ||
+                "Login failed";
+
+            toast.error(message);
+
+            throw error;
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Register
     const register = async (
         name: string,
         email: string,
@@ -89,30 +146,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
             setLoading(true);
 
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_BASE_URL}/auth/register`,
+            const { data } = await api.post(
+                "/auth/register",
                 {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        name,
-                        email,
-                        password,
-                    }),
+                    name,
+                    email,
+                    password,
                 }
             );
 
-            const data = await response.json();
+            const registeredUser = data.user;
+            const authToken = data.token;
 
-            if (!response.ok) {
+            if (!registeredUser || !authToken) {
                 throw new Error(
-                    data.message || "Registration failed"
+                    "Invalid registration response from server"
                 );
             }
-
-            const { user: registeredUser, token: authToken } = data;
 
             setUser(registeredUser);
             setToken(authToken);
@@ -126,25 +176,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 "auth_user",
                 JSON.stringify(registeredUser)
             );
-        } catch (error) {
-            console.error("Registration error:", error);
+
+            toast.success(
+                "Account created successfully"
+            );
+
+            router.replace("/");
+        } catch (error: any) {
+            console.error(
+                "Registration error:",
+                error
+            );
+
+            const message =
+                error?.response?.data?.message ||
+                error?.message ||
+                "Registration failed";
+
+            toast.error(message);
+
             throw error;
         } finally {
             setLoading(false);
         }
     };
 
-    // Logout
     const logout = (): void => {
         setUser(null);
         setToken(null);
 
         localStorage.removeItem("auth_token");
         localStorage.removeItem("auth_user");
+
+        toast.success("Logged out successfully");
+
+        router.replace("/login");
     };
 
-    // Update user information
-    const updateUser = (userData: Partial<User>): void => {
+    const updateUser = (
+        userData: Partial<User>
+    ): void => {
         setUser((currentUser) => {
             if (!currentUser) {
                 return null;
