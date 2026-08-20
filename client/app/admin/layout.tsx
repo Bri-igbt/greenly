@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import Navbar from "@/app/components/Navbar";
+import { useAuth } from "../context/AuthContext";
 
 const adminLinks = [
     {
@@ -48,12 +49,18 @@ export default function Layout({
 }: {
     children: React.ReactNode;
 }) {
+    const {user} = useAuth()
     const pathname = usePathname();
     const router = useRouter();
 
     const handleLogout = () => {
         router.replace("/");
     };
+
+    if(!user?.isAdmin){
+        router.replace("/");
+        return null;
+    } 
 
     return (
         <div className="min-h-screen bg-app-cream">

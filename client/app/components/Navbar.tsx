@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const router = useRouter();
 
-    const user: any = { name: "Bright", email: "bright@gmail.com", isAdmin: true}
+    const {user, logout} = useAuth()
     const { cartCount, setIsCartOpen} = useCart()
 
     const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -24,6 +25,7 @@ const Navbar = () => {
     };
 
     const handleLogout = () => {
+        logout()
         setUserMenuOpen(false)
         router.replace("/")
     }
