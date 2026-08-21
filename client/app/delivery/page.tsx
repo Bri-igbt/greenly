@@ -97,7 +97,7 @@ const page = () => {
                     <div className="space-y-4">
                         {orders.map((order) => 
                         <DeliveryOrderCard 
-                            key={order._id} 
+                            key={order.id} 
                             order={order} 
                             tab={tab} 
                             handleUpdateStatus={handleUpdateStatus} 

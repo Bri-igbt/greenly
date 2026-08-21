@@ -20,7 +20,7 @@ const page = () => {
     const [loading, setLoading] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('card');
     const [address, setAddress] = useState<Address>({
-        _id: "",
+        id: "",
         label: "Home",
         address: "",
         city: "",
@@ -50,7 +50,7 @@ const page = () => {
         if(user?.addresses?.length) {
             const defaultAddress = user.addresses.find((a)=> a.isDefault) || user.addresses[0];
             setAddress({
-                _id: defaultAddress?._id,
+                id: defaultAddress?.id,
                 label: defaultAddress?.label,
                 address: defaultAddress?.address,
                 city: defaultAddress?.city,

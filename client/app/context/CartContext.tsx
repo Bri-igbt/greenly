@@ -57,12 +57,12 @@ export function CartProvider({
     const addToCart = (product: Product, quantity = 1) => {
         setItems((prev) => {
         const existing = prev.find(
-            (item) => item.product._id === product._id
+            (item) => item.product.id === product.id
         );
 
         if (existing) {
             return prev.map((item) =>
-            item.product._id === product._id
+            item.product.id === product.id
                 ? {
                     ...item,
                     quantity: item.quantity + quantity,
@@ -79,7 +79,7 @@ export function CartProvider({
 
     const removeFromCart = (productId: string) => {
         setItems((prev) =>
-        prev.filter((item) => item.product._id !== productId)
+        prev.filter((item) => item.product.id !== productId)
         );
     };
 
@@ -94,7 +94,7 @@ export function CartProvider({
 
         setItems((prev) =>
         prev.map((item) =>
-            item.product._id === productId
+            item.product.id === productId
             ? { ...item, quantity }
             : item
         )

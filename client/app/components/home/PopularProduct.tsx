@@ -1,17 +1,22 @@
 'use client'
 
 import { Product } from '@/app/types'
-import { dummyProducts } from '@/assets/assets'
 import { ArrowRightIcon } from 'lucide-react'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import ProductCard from '../ProductCard'
+import api from '@/config/api'
+import toast from 'react-hot-toast'
 
 const PopularProduct = () => {
     const [products, setProduct] = useState<Product[]>([])
 
     useEffect(() => {
-        setProduct(dummyProducts.slice(0,10))
+        api.get('/products?sort=rating').then(({data})=> {
+            setProduct(data.products)
+        }).catch((error: any)=> {
+            toast.error(error.response.data.message || error?.message)
+        })
     }, [])
     
 
@@ -31,8 +36,8 @@ const PopularProduct = () => {
                 </div>
 
                 <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 xl:gap-8'>
-                    {products.map((product) => (
-                        <ProductCard key={product._id} product={product} />
+                    {products.slice(0,10).map((product) => (
+                        <ProductCard key={product.id} product={product} />
                     ))}
                 </div>
             </div>

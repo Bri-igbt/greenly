@@ -31,7 +31,7 @@ const page = () => {
     useEffect(() => {
         const fetchData = async () => {
             if (isEdit) {
-                setFormData(() => dummyProducts.find((p) => p._id === id) as any)
+                setFormData(() => dummyProducts.find((p) => p.id === id) as any)
             }
             setLoading(false)
         };

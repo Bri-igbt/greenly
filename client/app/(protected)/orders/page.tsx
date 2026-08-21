@@ -82,14 +82,14 @@ const Page = () => {
                     <div className="space-y-4">
                         {orders.map((order)=> (
                             <Link 
-                                key={order._id} 
-                                href={`/orders/${order._id}`}
+                                key={order.id} 
+                                href={`/orders/${order.id}`}
                                 className="block max-w-4xl bg-white rounded-2xl p-5 hover:shadow transition-all"
                             >
                                 <div className="flex items-start justify-between mb-3">
                                     <div>
                                         <p className="text-sm font-medium text-app-green">
-                                            Orders #{order._id.slice(-8).toUpperCase()}
+                                            Orders #{order.id.slice(-8).toUpperCase()}
                                         </p>
 
                                         <div className="flex items-center gap-2 mt-1">

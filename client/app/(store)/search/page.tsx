@@ -4,10 +4,12 @@ import Loader from "@/app/components/Loader";
 import ProductCard from "@/app/components/ProductCard";
 import { Product } from "@/app/types";
 import { dummyProducts } from "@/assets/assets";
+import api from "@/config/api";
 import { Home, Search } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react"
+import toast from "react-hot-toast";
 
 const page = () => {
     const searchParams = useSearchParams();
@@ -17,20 +19,13 @@ const page = () => {
     const [products, setProducts] = useState<Product[]>([]);
 
     useEffect(() => {
-        setLoading(true);
+        if(!query) return;
+        setLoading(true); 
 
-        if (!query) {
-            setProducts([]);
-            setLoading(false);
-            return;
-        }
-
-        const filteredProducts = dummyProducts.filter((product) =>
-            product.name.toLowerCase().includes(query.toLowerCase())
-        );
-
-        setProducts(filteredProducts);
-        setLoading(false);
+        api.get(`/products?search=${encodeURIComponent(query)}`)
+        .then((res)=> setProducts(res.data.products))
+        .catch((error: any)=> {toast.error(error.response?.data?.message || error.message)})
+        .finally(()=> setLoading(false))
     }, [query]);
 
     return (
@@ -76,7 +71,7 @@ const page = () => {
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {products.map((product)=> (
-                            <ProductCard key={product._id} product={product} />
+                            <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
                 )}

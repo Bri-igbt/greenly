@@ -16,7 +16,7 @@ const ProductCard = ({ product }: Props) => {
     return (
         <div
             className="bg-white rounded-2xl overflow-hidden shadow hover:shadow-md transition-all duration-300 group animate-fade-in cursor-pointer"
-            onClick={() => router.push(`/products/${product._id}`)}
+            onClick={() => router.push(`/products/${product.id}`)}
         >
             <div className="relative aspect-square overflow-hidden">
                 <Image

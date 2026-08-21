@@ -3,22 +3,19 @@
 import Loading from "@/app/components/Loading";
 import ProductCard from "@/app/components/ProductCard";
 import { Product } from "@/app/types"
-import { dummyProducts } from "@/assets/assets";
+import api from "@/config/api";
 import { Zap } from "lucide-react";
 import { useEffect, useState } from "react"
+import toast from "react-hot-toast";
 
 const page = () => {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setProducts(dummyProducts.filter((p) => p.stock > 0));
-
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        api.get("/products/flash-deals").then((res)=> setProducts(res.data.products))
+        .catch((error: any) => toast.error(error.response.data.message || error?.message))
+        .finally(()=> setLoading(false))
     }, []);
 
     return (
@@ -41,11 +38,12 @@ const page = () => {
                         <div className="text-center py-16">
                             <Zap className="size-16 text-app-border mx-auto mb-4" />
                             <h2 className="text-lg font-semibold text-app-green mb-2">No deals right now</h2>
+                            <p className="text-sm text-gray-400">Check back soon for amazing offers!</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
                             {products.map((product) => product.stock > 0 && (
-                                <ProductCard key={product._id} product={product} />
+                                <ProductCard key={product.id} product={product} />
                             ))}
                         </div>
                     )

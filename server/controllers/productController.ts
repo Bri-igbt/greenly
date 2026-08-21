@@ -20,33 +20,122 @@ export const getFlashDeals = async (req:Request, res:Response) => {
 
 // GET
 // /api/products
-export const getProducts = async (req:Request, res:Response) => {
-    const {category, search, minPrice, maxPrice, sort} = req.query;
+// GET /api/products
+export const getProducts = async (req: Request, res: Response) => {
+    try {
+        const {
+            category,
+            search,
+            minPrice,
+            maxPrice,
+            sort,
+            organic,
+            page = "1",
+            limit = "12",
+        } = req.query;
 
-    const where: any = {};
-    if(category && category !== "all") where.category = category as string;
-    if(search) where.name = {contains: search as string, mode: "insensitive"};
+        const currentPage = Math.max(Number(page) || 1, 1);
+        const pageLimit = Math.max(Number(limit) || 12, 1);
+        const skip = (currentPage - 1) * pageLimit;
 
-    if(minPrice || maxPrice) {
-        where.price = {};
-        if(minPrice) where.price.gte = Number(minPrice)
-        if(maxPrice) where.price.lte = Number(maxPrice)
+        const where: any = {};
+
+        // Category filter
+        if (
+            category &&
+            typeof category === "string" &&
+            category !== "all"
+        ) {
+            where.category = category;
+        }
+
+        // Search filter
+        if (search && typeof search === "string") {
+            where.name = {
+                contains: search,
+                mode: "insensitive",
+            };
+        }
+
+        // Price filter
+        if (minPrice || maxPrice) {
+            where.price = {};
+
+            if (minPrice) {
+                where.price.gte = Number(minPrice);
+            }
+
+            if (maxPrice) {
+                where.price.lte = Number(maxPrice);
+            }
+        }
+
+        // Sorting
+        let orderBy: any = {
+            createdAt: "desc",
+        };
+
+        if (sort === "price-low") {
+            orderBy = {
+                price: "asc",
+            };
+        } else if (sort === "price-high") {
+            orderBy = {
+                price: "desc",
+            };
+        }
+
+        // Get total number of matching products
+        const totalProducts = await prisma.product.count({
+            where,
+        });
+
+        // Get products
+        const products = await prisma.product.findMany({
+            where,
+            orderBy,
+            skip,
+            take: pageLimit,
+        });
+
+        // Calculate discounts
+        const productsWithDiscount = products.map((product) => {
+            const discount =
+                product.originalPrice &&
+                product.originalPrice > product.price
+                    ? Math.round(
+                          ((product.originalPrice - product.price) /
+                              product.originalPrice) *
+                              100
+                      )
+                    : 0;
+
+            return {
+                ...product,
+                discount,
+            };
+        });
+
+        const totalPages = Math.ceil(
+            totalProducts / pageLimit
+        );
+
+        return res.status(200).json({
+            products: productsWithDiscount,
+            page: currentPage,
+            limit: pageLimit,
+            totalProducts,
+            pages: totalPages,
+        });
+    } catch (error: any) {
+        console.error("Get Products Error:", error);
+
+        return res.status(500).json({
+            message: "Failed to fetch products",
+            error: error.message,
+        });
     }
-
-    const orderBy: any = {};
-    if(sort === "price-low") orderBy.price = 'asc'
-    else if (sort === "price-high") orderBy.price = "desc"
-    else orderBy.createdAt = 'desc'
-
-    const products = await prisma.product.findMany({where, orderBy})
-    const productsWithDiscount = products.map((p: any) => {
-        const discount = p.originalPrice && p.price ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
-        return {...p, discount}
-    })
-
-    res.json({products: productsWithDiscount})
-}
-
+};
 // GET
 // /api/products/:id
 export const getProduct = async (req: Request, res: Response) => {

@@ -3,14 +3,22 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Product } from "@/app/types";
-import { categoriesData, dummyProducts } from "@/assets/assets";
+import { categoriesData } from "@/assets/assets";
 import Link from "next/link";
-import { ChevronDown, Home, SlidersHorizontal, XIcon } from "lucide-react";
+import {
+    ChevronDown,
+    Home,
+    SlidersHorizontal,
+    XIcon,
+} from "lucide-react";
+
 import ProductCard from "@/app/components/ProductCard";
 import Loading from "@/app/components/Loading";
 import FilterPanel from "@/app/components/FilterPanel";
+import api from "@/config/api";
+import toast from "react-hot-toast";
 
-const page = () => {
+const ProductsPage = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -19,74 +27,205 @@ const page = () => {
     const [loading, setLoading] = useState(true);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+    // URL parameters
     const category = searchParams.get("category") || "";
+    const search = searchParams.get("search") || "";
     const organic = searchParams.get("organic") || "";
     const sort = searchParams.get("sort") || "";
     const currentPage = Number(searchParams.get("page")) || 1;
     const minPrice = searchParams.get("minPrice") || "";
     const maxPrice = searchParams.get("maxPrice") || "";
 
+    // =========================
+    // FETCH PRODUCTS
+    // =========================
     const fetchProducts = async () => {
         setLoading(true);
-        const filtered = dummyProducts.filter(
-            (p) => category === "" || p.category === category
-        );
-        setProducts(filtered);
-        setLoading(false);
+
+        try {
+            const params = new URLSearchParams();
+
+            // Category
+            if (category && category !== "all") {
+                params.set("category", category);
+            }
+
+            // Search
+            if (search) {
+                params.set("search", search);
+            }
+
+            // Organic
+            if (organic) {
+                params.set("organic", organic);
+            }
+
+            // Price
+            if (minPrice) {
+                params.set("minPrice", minPrice);
+            }
+
+            if (maxPrice) {
+                params.set("maxPrice", maxPrice);
+            }
+
+            // Sort
+            if (sort) {
+                params.set("sort", sort);
+            }
+
+            // Pagination
+            params.set("page", String(currentPage));
+            params.set("limit", "12");
+
+            console.log(
+                "Fetching products:",
+                `/products?${params.toString()}`
+            );
+
+            const { data } = await api.get(
+                `/products?${params.toString()}`
+            );
+
+            console.log("Products response:", data);
+
+            setProducts(data.products || []);
+            setTotalPages(data.pages || 1);
+        } catch (error: any) {
+            console.error("Fetch products error:", error);
+
+            toast.error(
+                error?.response?.data?.message ||
+                    error?.message ||
+                    "Failed to fetch products"
+            );
+
+            setProducts([]);
+            setTotalPages(1);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const updateFilter = (key: string, value: string) => {
-        const newParams = new URLSearchParams(searchParams.toString());
+    // =========================
+    // UPDATE FILTER
+    // =========================
+    const updateFilter = (
+        key: string,
+        value: string
+    ) => {
+        const newParams = new URLSearchParams(
+            searchParams.toString()
+        );
+
         if (value) {
             newParams.set(key, value);
         } else {
             newParams.delete(key);
         }
+
+        // Reset page when changing filters
         if (key !== "page") {
             newParams.delete("page");
         }
-        router.push(`/products?${newParams.toString()}`);
+
+        const queryString = newParams.toString();
+
+        router.push(
+            queryString
+                ? `/products?${queryString}`
+                : "/products"
+        );
     };
 
+    // =========================
+    // CLEAR FILTERS
+    // =========================
     const clearFilters = () => {
-        const params = new URLSearchParams(searchParams.toString());
+        const params = new URLSearchParams(
+            searchParams.toString()
+        );
+
         params.delete("category");
         params.delete("organic");
         params.delete("minPrice");
         params.delete("maxPrice");
         params.delete("sort");
+        params.delete("search");
         params.delete("page");
 
-        router.push(`/products?${params.toString()}`);
+        const queryString = params.toString();
+
+        router.push(
+            queryString
+                ? `/products?${queryString}`
+                : "/products"
+        );
     };
 
-    const activeCategory = categoriesData.find((c)=> c.slug === category);
-    const hasFilters = category || organic || minPrice || maxPrice;
+    // =========================
+    // ACTIVE CATEGORY
+    // =========================
+    const activeCategory = categoriesData.find(
+        (c) => c.slug === category
+    );
 
+    const hasFilters =
+        Boolean(category) ||
+        Boolean(organic) ||
+        Boolean(search) ||
+        Boolean(minPrice) ||
+        Boolean(maxPrice) ||
+        Boolean(sort);
+
+    // =========================
+    // FETCH WHEN URL CHANGES
+    // =========================
     useEffect(() => {
         fetchProducts();
-    }, [category, organic, sort, currentPage, minPrice, maxPrice]);
-
+    }, [
+        category,
+        search,
+        organic,
+        sort,
+        currentPage,
+        minPrice,
+        maxPrice,
+    ]);
 
     return (
         <div className="min-h-screen bg-app-cream">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+                {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-sm text-app-text-light mb-6">
-                    <Link href='/' className="hover:text-app-green transition-colors">
+                    <Link
+                        href="/"
+                        className="hover:text-app-green transition-colors"
+                    >
                         <Home className="size-4" />
                     </Link>
 
                     <span>/</span>
+
                     <span className="text-app-green font-medium">
-                        {activeCategory ? activeCategory.name : "All Products"}
+                        {activeCategory
+                            ? activeCategory.name
+                            : search
+                            ? `Search: ${search}`
+                            : "All Products"}
                     </span>
                 </nav>
 
                 <div className="flex gap-8 xl:gap-10">
+
+                    {/* =========================
+                        DESKTOP FILTER
+                    ========================= */}
                     <aside className="hidden lg:block w-64 shrink-0">
                         <div className="bg-white rounded-2xl p-4 sticky top-24">
                             <FilterPanel
-                                categories={categoriesData} 
+                                categories={categoriesData}
                                 category={category}
                                 organic={organic}
                                 minPrice={minPrice}
@@ -98,32 +237,72 @@ const page = () => {
                         </div>
                     </aside>
 
+                    {/* =========================
+                        MAIN CONTENT
+                    ========================= */}
                     <main className="flex-1">
+
+                        {/* Header */}
                         <div className="flex items-center justify-between mb-6">
+
                             <div>
                                 <h1 className="text-2xl font-semibold text-app-green">
-                                    {activeCategory ? activeCategory.name : "All Products"}
+                                    {activeCategory
+                                        ? activeCategory.name
+                                        : search
+                                        ? `Search results for "${search}"`
+                                        : "All Products"}
                                 </h1>
 
-                                <p className="text-sm text-app-text-light mt-0.5">{products.length} products found</p>
+                                <p className="text-sm text-app-text-light mt-0.5">
+                                    {products.length} products found
+                                </p>
                             </div>
 
                             <div className="flex flex-col lg:items-center gap-3">
-                                <button onClick={()=> setMobileFiltersOpen(true)} className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm bg-white rounded-xl border border-app-border hover:bg-app-cream transition-colors">
-                                    <SlidersHorizontal className="size-4" /> Filters
+
+                                {/* Mobile filter button */}
+                                <button
+                                    onClick={() =>
+                                        setMobileFiltersOpen(true)
+                                    }
+                                    className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm bg-white rounded-xl border border-app-border hover:bg-app-cream transition-colors"
+                                >
+                                    <SlidersHorizontal className="size-4" />
+                                    Filters
                                 </button>
 
+                                {/* Sort */}
                                 <div className="relative">
-                                    <select 
+                                    <select
                                         value={sort}
-                                        onChange={(e)=> updateFilter("sort", e.target.value)}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "sort",
+                                                e.target.value
+                                            )
+                                        }
                                         className="appearance-none pl-3 pr-8 py-2 text-sm bg-white rounded-xl border border-app-border focus:border-app-green outline-none cursor-pointer"
                                     >
-                                        <option value="">Newest</option>
-                                        <option value="price_asc">Price: Low → High</option>
-                                        <option value="price_desc">Price: High → Low</option>
-                                        <option value="rating">Top Rated</option>
-                                        <option value="name">A → Z</option>
+                                        <option value="">
+                                            Newest
+                                        </option>
+
+                                        <option value="price-low">
+                                            Price: Low → High
+                                        </option>
+
+                                        <option value="price-high">
+                                            Price: High → Low
+                                        </option>
+
+                                        <option value="rating">
+                                            Top Rated
+                                        </option>
+
+                                        <option value="name">
+                                            A → Z
+                                        </option>
                                     </select>
 
                                     <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-app-text-light pointer-events-none" />
@@ -131,17 +310,23 @@ const page = () => {
                             </div>
                         </div>
 
+                        {/* =========================
+                            PRODUCTS
+                        ========================= */}
                         {loading ? (
                             <Loading />
                         ) : products.length === 0 ? (
                             <div className="text-center py-16">
+
                                 <p className="text-lg font-semibold mb-2 text-app-green">
                                     No products found
                                 </p>
+
                                 <p className="text-sm text-app-text-light mb-4">
                                     Try adjusting your filters or search terms
                                 </p>
-                                <button 
+
+                                <button
                                     onClick={clearFilters}
                                     className="px-5 py-2 text-sm font-medium bg-app-green text-white rounded-xl hover:bg-app-green-light transition-colors"
                                 >
@@ -150,58 +335,90 @@ const page = () => {
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 xl:gap-8">
-                                {products.map((product)=> product.stock > 0 && (
-                                    <ProductCard key={product._id} product={product} />
+
+                                {products.map((product) => (
+                                    <ProductCard
+                                        key={product.id}
+                                        product={product}
+                                    />
                                 ))}
+
                             </div>
                         )}
 
+                        {/* =========================
+                            PAGINATION
+                        ========================= */}
                         {totalPages > 1 && (
-                            <div className="mt-16 flex-center gap-2">
-                                {Array.from({ length: totalPages }).map((_, i) => (
-                                <button
-                                    key={i}
-                                    onClick={() => {
-                                    updateFilter("page", String(i + 1));
+                            <div className="mt-16 flex justify-center items-center gap-2">
 
-                                    window.scrollTo({
-                                        top: 0,
-                                        behavior: "smooth",
-                                    });
-                                    }}
-                                    className={`size-9 rounded-lg text-sm font-medium transition-colors ${
-                                    currentPage === i + 1
-                                        ? "bg-app-green text-white"
-                                        : "bg-white text-app-text-light hover:bg-app-cream"
-                                    }`}
-                                >
-                                    {i + 1}
-                                </button>
+                                {Array.from({
+                                    length: totalPages,
+                                }).map((_, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => {
+                                            updateFilter(
+                                                "page",
+                                                String(i + 1)
+                                            );
+
+                                            window.scrollTo({
+                                                top: 0,
+                                                behavior: "smooth",
+                                            });
+                                        }}
+                                        className={`size-9 rounded-lg text-sm font-medium transition-colors ${
+                                            currentPage === i + 1
+                                                ? "bg-app-green text-white"
+                                                : "bg-white text-app-text-light hover:bg-app-cream"
+                                        }`}
+                                    >
+                                        {i + 1}
+                                    </button>
                                 ))}
+
                             </div>
                         )}
                     </main>
                 </div>
             </div>
 
+            {/* =========================
+                MOBILE FILTERS
+            ========================= */}
             {mobileFiltersOpen && (
                 <>
-                    <div 
-                        onClick={()=> setMobileFiltersOpen(false)} 
-                        className="fixed inset-0 bg-black/40 z-50" 
+                    {/* Overlay */}
+                    <div
+                        onClick={() =>
+                            setMobileFiltersOpen(false)
+                        }
+                        className="fixed inset-0 bg-black/40 z-50"
                     />
 
+                    {/* Panel */}
                     <div className="fixed bottom-0 left-0 right-0 bg-white z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto animate-slide-in-up">
+
                         <div className="flex items-center justify-between p-4 border-b border-app-border">
-                            <h3 className="text-lg font-semibold text-app-green">Filters</h3>
-                            <button onClick={()=> setMobileFiltersOpen(false)} className="p-2 hover:bg-app-cream rounded-lg">
+
+                            <h3 className="text-lg font-semibold text-app-green">
+                                Filters
+                            </h3>
+
+                            <button
+                                onClick={() =>
+                                    setMobileFiltersOpen(false)
+                                }
+                                className="p-2 hover:bg-app-cream rounded-lg"
+                            >
                                 <XIcon className="size-5" />
                             </button>
                         </div>
 
                         <div className="p-4">
                             <FilterPanel
-                                categories={categoriesData} 
+                                categories={categoriesData}
                                 category={category}
                                 organic={organic}
                                 minPrice={minPrice}
@@ -215,7 +432,7 @@ const page = () => {
                 </>
             )}
         </div>
-    )
-}
+    );
+};
 
-export default page;
+export default ProductsPage;
