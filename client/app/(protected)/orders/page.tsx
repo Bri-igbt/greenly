@@ -2,7 +2,6 @@
 
 import { useCart } from "@/app/context/CartContext";
 import type { Order } from "@/app/types";
-import { dummyDashboardOrdersData } from "@/assets/assets";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CalendarIcon, ChevronRightIcon, PackageIcon } from "lucide-react";
@@ -10,6 +9,8 @@ import Link from "next/link";
 import Loader from "@/app/components/Loader";
 import { statusColors } from "@/app/utils/data";
 import Image from "next/image";
+import toast from "react-hot-toast";
+import api from "@/config/api";
 
 const Page = () => {
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
@@ -27,12 +28,32 @@ const Page = () => {
     const tabs = ["all", "Placed", "Out for Delivery", "Delivered"];
 
     const fetchOrders = async () => {
-        setLoading(true);
-        setTimeout(() => {
-            setOrders(dummyDashboardOrdersData as Order[]);
-            setLoading(false);
-        }, 500);
-    };
+    setLoading(true);
+
+    try {
+        const params =
+            activeTab !== "all"
+                ? `?status=${encodeURIComponent(activeTab)}`
+                : "";
+
+        const { data } = await api.get(`/orders${params}`);
+        // console.log("Orders API response:", data);
+        setOrders(data.orders || data || []);
+
+    } catch (error: any) {
+        console.error("Fetch orders error:", error);
+
+        toast.error(
+            error.response?.data?.message ||
+            error.message ||
+            "Failed to fetch orders"
+        );
+
+        setOrders([]);
+    } finally {
+        setLoading(false);
+    }
+};
 
     useEffect(() => {
         const shouldClearCart = searchParams.get("clearCart");

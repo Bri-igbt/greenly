@@ -5,7 +5,7 @@ import LiveMap from "@/app/components/orders/LiveMap";
 import OrderOTP from "@/app/components/orders/OrderOTP";
 import OrderTimeLine from "@/app/components/orders/OrderTimeline";
 import { Order } from "@/app/types";
-import { dummyDashboardOrdersData } from "@/assets/assets";
+import api from "@/config/api";
 import { ArrowLeftIcon, MapPinIcon, PhoneIcon } from "lucide-react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation"
@@ -20,9 +20,37 @@ const page = () => {
     const [liveLocation, setLiveLocation] = useState<{lat: number, lng: number} | null >(null);
 
     useEffect(()=> {
-        setOrder(dummyDashboardOrdersData.find((o)=> o.id === id) as any);
-        setLoading(false);
+        api.get(`/orders/${id}`).then((res)=> setOrder(res.data.order))
+        .catch(()=> router.push("/orders"))
+        .finally(()=> setLoading(false))
     }, [id, router])
+
+    useEffect(() => {
+        if(!order || ['Delivered', 'Cancelled', 'Placed'].includes(order.status)) return;
+
+        const fetchLocation = async () => {
+            try {
+                const {data} = await api.get(`/orders/${id}/location`)
+                if(data.liveLocation?.lat && data.liveLocation?.lng && data.liveLocation.updatedAt) {
+                    setLiveLocation({
+                        lat: data.liveLocation.lat,
+                        lng: data.liveLocation.lng
+                    })
+                }
+
+                // Auto update order status if it changed
+                if(data.status && data.status !== order.status){
+                    setOrder((prev)=> prev ? {...prev, status: data.status} : prev)
+                }
+            } catch (error: any) {
+                
+            }
+        }
+        fetchLocation()
+        const interval = setInterval(fetchLocation, 10000)
+        return ()=> clearInterval(interval)
+
+    }, [id, order?.status])
 
     if(loading) return <Loader />;
     if(!order) null;

@@ -31,9 +31,10 @@ const page = () => {
         window.scrollTo(0,0);
         api.get(`/products/${id}`).then(({data}) => {
             setProduct(data.product)
-            
-        })
-
+            return api.get(`/products?category=${data.product.category}`)
+        }).then(({data}) =>{
+            setRelatedProducts(data.products.filter((p: Product) => p.id !== id))
+        }).catch(()=> router.push("/products")).finally(()=> setLoading(false))
     }, [id, router])
     
     if(loading) return <Loading />

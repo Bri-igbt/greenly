@@ -30,7 +30,10 @@ export const getAddresses = async (req: Request, res: Response) => {
 
 // ADD ADDRESS
 // POST /api/addresses
-export const addAddress = async (req: Request, res: Response) => {
+export const addAddress = async (
+    req: Request,
+    res: Response
+) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -49,32 +52,35 @@ export const addAddress = async (req: Request, res: Response) => {
             lng,
         } = req.body;
 
+        // Only address fields are required
         if (
             !label ||
             !address ||
             !city ||
             !state ||
-            !zip ||
-            lat == null ||
-            lng == null
+            !zip
         ) {
             return res.status(400).json({
-                message: "Please provide all required fields.",
+                message:
+                    "Please provide all required fields.",
             });
         }
 
-        const currentAddresses = await prisma.address.findMany({
-            where: {
-                userId: req.user.id,
-            },
-        });
+        const currentAddresses =
+            await prisma.address.findMany({
+                where: {
+                    userId: req.user.id,
+                },
+            });
 
         let makeDefault = Boolean(isDefault);
 
+        // First address automatically becomes default
         if (currentAddresses.length === 0) {
             makeDefault = true;
         }
 
+        // Remove default from existing addresses
         if (makeDefault) {
             await prisma.address.updateMany({
                 where: {
@@ -86,33 +92,56 @@ export const addAddress = async (req: Request, res: Response) => {
             });
         }
 
-        await prisma.address.create({
-            data: {
-                userId: req.user.id,
-                label,
-                address,
-                city,
-                state,
-                zip,
-                isDefault: makeDefault,
-                lat: Number(lat),
-                lng: Number(lng),
-            },
-        });
+        const createdAddress =
+            await prisma.address.create({
+                data: {
+                    userId: req.user.id,
 
-        const addresses = await prisma.address.findMany({
-            where: {
-                userId: req.user.id,
-            },
-            orderBy: {
-                createdAt: "asc",
-            },
-        });
+                    label,
+                    address,
+                    city,
+                    state,
+                    zip,
 
-        return res.status(201).json({ addresses });
+                    isDefault: makeDefault,
+
+                    // GPS is optional
+                    lat:
+                        lat != null
+                            ? Number(lat)
+                            : null,
+
+                    lng:
+                        lng != null
+                            ? Number(lng)
+                            : null,
+                },
+            });
+
+        const addresses =
+            await prisma.address.findMany({
+                where: {
+                    userId: req.user.id,
+                },
+                orderBy: {
+                    createdAt: "asc",
+                },
+            });
+
+        return res.status(201).json({
+            addresses,
+            address: createdAddress,
+        });
     } catch (error: any) {
+        console.error(
+            "Add Address Error:",
+            error
+        );
+
         return res.status(500).json({
-            message: error.message,
+            message:
+                error?.message ||
+                "Failed to add address",
         });
     }
 };

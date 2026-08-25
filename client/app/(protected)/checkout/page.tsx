@@ -3,16 +3,19 @@
 import CheckoutAddress from "@/app/components/checkout/CheckoutAddress";
 import CheckoutPayment from "@/app/components/checkout/CheckoutPayment";
 import CheckoutReview from "@/app/components/checkout/CheckoutReview";
+import { useAuth } from "@/app/context/AuthContext";
 import { useCart } from "@/app/context/CartContext";
 import { Address } from "@/app/types";
 import { dummyAddressData } from "@/assets/assets";
+import api from "@/config/api";
 import { ArrowLeftIcon, CheckIcon, ChevronRight, CreditCardIcon, MapPinIcon } from "lucide-react";
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const page = () => {
-    const {items, cartTotal} = useCart();
-    const {user} = {user: {addresses: dummyAddressData}}
+    const {items, cartTotal, clearCart} = useCart();
+    const {user} = useAuth();
 
     const router = useRouter();
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
@@ -43,7 +46,33 @@ const page = () => {
 
     const handlePlaceOrder = async () => {
         setLoading(true);
-        router.push('/orders')
+        try {
+            const orderData = {
+                items: items.map((item)=> ({
+                    product: item.product.id,
+                    quantity: item.quantity
+                })),
+                shippingAddress: address,
+                paymentMethod
+            }
+
+            const {data} = await api.post('/orders', orderData)
+            console.log(data)
+
+            if(data.url){
+                window.location.href = data.url;
+                return;
+            }
+            clearCart()
+            toast.success("Order placed successfully");
+            router.push(`/orders/${data.order.id}`)
+
+        }catch (error: any) {
+            toast.error(error.response?.data?.message || error.message);
+        }finally {
+            setLoading(false);
+            scrollTo(0,0);
+        }
     }
 
     useEffect(()=> {
