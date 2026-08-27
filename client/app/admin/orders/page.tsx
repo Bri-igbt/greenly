@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { DeliveryPartner } from "@/app/types";
 import { dummyDashboardOrdersData, dummyDeliveryPartnerData } from "@/assets/assets";
 import Loader from "@/app/components/Loader";
+import api from "@/config/api";
 
 
 
@@ -21,13 +22,25 @@ const page = () => {
     const [selectedPartner, setSelectedPartner] = useState("");
 
     const fetchOrders = async () => {
-        setOrders(dummyDashboardOrdersData)
-        setTimeout(() => setLoading(false), 1000)
+        try {
+            const {data} = await api.get("/orders/all")
+            setOrders(data.orders)
+
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to load orders")
+        } finally {
+            setLoading(false)
+        }
     };
 
     const fetchPartners = async () => {
-        setPartners(dummyDeliveryPartnerData as any)
-        setTimeout(() => setLoading(false), 1000)
+        try {
+            const {data} = await api.get("/admin/delivery-patners")
+            setPartners(data.partners.filter((p: DeliveryPartner) => p.isActive))
+            
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to fetch partner")
+        }
     };
 
     useEffect(() => {
@@ -36,14 +49,28 @@ const page = () => {
     }, []);
 
     const handleStatusChange = async (id: string, newStatus: string) => {
-        console.log(id, newStatus);
+        try {
+            await api.put(`/orders/${id}/status`, {status: newStatus})
+            toast.success("Order status updated")
+            fetchOrders()
+
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to update status")
+        }
     };
 
     const handleAssign = async () => {
         if (!assignModal || !selectedPartner) return;
-        toast.success("Delivery partner assigned!");
-        setAssignModal(null);
-        setSelectedPartner("");
+        try {
+            await api.put(`/admin/orders/${assignModal}/assign`, {partnerId: selectedPartner})
+            toast.success("Delivery partner assigned!")
+            setAssignModal(null);
+            setSelectedPartner("");
+            fetchOrders();
+
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed")
+        }
     };
 
     const statusOptions = ["Placed", "Confirmed", "Assigned", "Packed", "Out for Delivery", "Delivered", "Cancelled"];

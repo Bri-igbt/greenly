@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { PackageIcon, UsersIcon, ShoppingBagIcon, AlertTriangleIcon } from "lucide-react";
-import { dummyAdminDashboardData } from "@/assets/assets";
 import Loader from "@/app/components/Loader";
 import { statusColors } from "@/app/utils/data";
 import Link from "next/link";
+import api from "@/config/api";
 
 
 interface Stats {
@@ -21,10 +21,10 @@ const page = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setTimeout(() => {
-            setStats(dummyAdminDashboardData);
-            setLoading(false);
-        }, 1000);
+        api.get("/admin/stats")
+        .then((res) => setStats(res.data))
+        .catch(() => {})
+        .finally(() => setLoading(false))
     }, []);
 
     const cards = stats

@@ -6,6 +6,8 @@ import { dummyProducts } from "@/assets/assets";
 import { Product } from "@/app/types";
 import Loader from "@/app/components/Loader";
 import Link from "next/link";
+import api from "@/config/api";
+import toast from "react-hot-toast";
 
 
 const page = () => {
@@ -14,10 +16,14 @@ const page = () => {
     const [loading, setLoading] = useState(true);
 
     const fetchProducts = async () => {
-        setProducts(dummyProducts);
-        setTimeout(() => {
-            setLoading(false);
-        }, 1000);
+        try {
+            const {data} = await api.get("/products")
+            setProducts(data.products)
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || error?.message)
+        } finally {
+            setLoading(false)
+        }
     };
 
     useEffect(() => {
@@ -26,7 +32,14 @@ const page = () => {
 
     const handleMarkOutOfStock = async (id: string, name: string) => {
         if (!window.confirm(`Are you sure you want to mark "${name}" as out of stock?`)) return;
-        console.log(id);
+        
+        try {
+            await api.delete(`/products/${id}`)
+            toast.success('Product marked as out of stock');
+            fetchProducts();
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to update product")
+        }
     };
 
     if (loading) return <Loader />

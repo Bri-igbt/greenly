@@ -10,6 +10,7 @@ import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index"
 import addressRouter from "./routes/addressRoutes";
 import deliveryPartnerRouter from "./routes/deliveryPartnerRoutes";
+import adminRouter from "./routes/adminRoutes";
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use("/api/orders", orderRouter);
 app.use("/api/inngest", serve({ client: inngest, functions }));
 app.use("/api/addresses", addressRouter)
 app.use("/api/delivery", deliveryPartnerRouter)
+app.use("/api/admin", adminRouter)
 
 //Error Handling
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
