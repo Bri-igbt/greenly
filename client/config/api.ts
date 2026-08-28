@@ -3,16 +3,18 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:5000/api",
-    headers: {
-        "Content-Type": "application/json",
-    },
+    baseURL:
+        process.env.NEXT_PUBLIC_BASE_URL ||
+        "http://localhost:5000/api",
 });
 
 // Attach authentication token to every request
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem("auth_token");
+
+        console.log("API REQUEST:", config.method?.toUpperCase(), config.url);
+        console.log("AUTH TOKEN EXISTS:", !!token);
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;

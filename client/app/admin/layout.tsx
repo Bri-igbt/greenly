@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import {
     PlusIcon,
@@ -49,7 +50,8 @@ export default function Layout({
 }: {
     children: React.ReactNode;
 }) {
-    const {user} = useAuth()
+    const { user } = useAuth();
+
     const pathname = usePathname();
     const router = useRouter();
 
@@ -57,10 +59,22 @@ export default function Layout({
         router.replace("/");
     };
 
-    if(!user?.isAdmin){
-        router.replace("/");
+    // Redirect non-admin users after rendering
+    useEffect(() => {
+        if (user && !user.isAdmin) {
+            router.replace("/");
+        }
+    }, [user, router]);
+
+    // Wait until user information is available
+    if (!user) {
         return null;
-    } 
+    }
+
+    // Don't render the admin panel for non-admin users
+    if (!user.isAdmin) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen bg-app-cream">
@@ -70,8 +84,9 @@ export default function Layout({
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24">
                 <div className="flex gap-8">
-                    <aside
-                        className="hidden lg:block fixed top-24 w-64 bg-white rounded-2xl border border-app-border p-4 h-fit">
+
+                    {/* Sidebar */}
+                    <aside className="hidden lg:block fixed top-24 w-64 bg-white rounded-2xl border border-app-border p-4 h-fit">
                         <div className="pb-4 mb-4 border-b border-app-border">
                             <h2 className="flex items-center gap-2 text-lg font-semibold text-app-green">
                                 <ShieldIcon className="size-5" />
@@ -86,18 +101,31 @@ export default function Layout({
                                 let isActive = false;
 
                                 if (link.href === "/admin") {
-                                    isActive = pathname === "/admin";
-                                } else if (link.href === "/admin/products/new") {
-                                    isActive = pathname === "/admin/products/new";
-                                } else if (link.href === "/admin/products") {
                                     isActive =
-                                        pathname === "/admin/products" ||
-                                        (pathname.startsWith("/admin/products/") &&
-                                            pathname !== "/admin/products/new");
+                                        pathname === "/admin";
+                                } else if (
+                                    link.href === "/admin/products/new"
+                                ) {
+                                    isActive =
+                                        pathname ===
+                                        "/admin/products/new";
+                                } else if (
+                                    link.href === "/admin/products"
+                                ) {
+                                    isActive =
+                                        pathname ===
+                                            "/admin/products" ||
+                                        (pathname.startsWith(
+                                            "/admin/products/"
+                                        ) &&
+                                            pathname !==
+                                                "/admin/products/new");
                                 } else {
                                     isActive =
                                         pathname === link.href ||
-                                        pathname.startsWith(link.href + "/");
+                                        pathname.startsWith(
+                                            link.href + "/"
+                                        );
                                 }
 
                                 return (
@@ -126,7 +154,8 @@ export default function Layout({
                         </nav>
                     </aside>
 
-                    <main className="flex-1 lg:ml-72 overflow-y-auto pb-20 no-scrollbar ">
+                    {/* Main content */}
+                    <main className="flex-1 lg:ml-72 overflow-y-auto pb-20 no-scrollbar">
                         {children}
                     </main>
 

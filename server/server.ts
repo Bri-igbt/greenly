@@ -32,7 +32,6 @@ app.use("/api/addresses", addressRouter)
 app.use("/api/delivery", deliveryPartnerRouter)
 app.use("/api/admin", adminRouter)
 
-//Error Handling
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
     console.error(error)
     res.status(500).json({message: error.message})

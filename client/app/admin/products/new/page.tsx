@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { ArrowLeftIcon } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { categoriesData, dummyProducts } from "@/assets/assets";
 import Link from "next/link";
 import Loader from "@/app/components/Loader";
 import Image from "next/image";
+import toast from "react-hot-toast";
+import api from "@/config/api";
 
 const page = () => {
     const { id } = useParams();
     const isEdit = Boolean(id);
+    const router = useRouter();
 
     const [loading, setLoading] = useState(isEdit);
     const [saving, setSaving] = useState(false);
@@ -30,19 +33,146 @@ const page = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            if (isEdit) {
-                setFormData(() => dummyProducts.find((p) => p.id === id) as any)
+            try {
+                if (isEdit) {
+                    const {data: prodData} = await api.get(`/products/${id}`);
+                    const p = prodData.product;
+                    setFormData({
+                        name: p.name,
+                        description: p.description,
+                        price: p.price.toString(),
+                        originalPrice: p.originalPrice ? p.originalPrice.toString() : "",
+                        image: p.image,
+                        category: p.category,
+                        unit: p.unit,
+                        stock: p.stock.toString(),
+                        isOrganic: p.isOrganic,
+                    })
+                }
+            } catch (error: any) {
+                toast.error(error.response?.data?.message || "Failed to load data")
             }
+
             setLoading(false)
         };
         fetchData();
     }, [id, isEdit]);
 
-    const handleSubmit = async (e: React.SubmitEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-    };
+        try {
+            setSaving(true);
 
+            let imageUrl = formData.image || "";
+
+            // ==============================
+            // STEP 1: Upload image
+            // ==============================
+            if (imageFile) {
+                const uploadData = new FormData();
+
+                uploadData.append("image", imageFile);
+
+                console.log("========== FRONTEND UPLOAD ==========");
+                console.log("Image:", {
+                    name: imageFile.name,
+                    type: imageFile.type,
+                    size: imageFile.size,
+                });
+
+                const uploadResponse = await api.post(
+                    "/upload",
+                    uploadData
+                );
+
+                console.log(
+                    "Cloudinary upload response:",
+                    uploadResponse.data
+                );
+
+                imageUrl = uploadResponse.data.url;
+
+                if (!imageUrl) {
+                    throw new Error(
+                        "Cloudinary upload succeeded but no image URL was returned."
+                    );
+                }
+
+                console.log("Uploaded image URL:", imageUrl);
+            }
+
+            // ==============================
+            // STEP 2: Make sure image exists
+            // ==============================
+            if (!imageUrl) {
+                toast.error("Please select a product image.");
+                return;
+            }
+
+            // ==============================
+            // STEP 3: Create product
+            // ==============================
+            const productData = {
+                ...formData,
+                image: imageUrl,
+                price: Number(formData.price),
+                originalPrice: formData.originalPrice
+                    ? Number(formData.originalPrice)
+                    : null,
+                stock: Number(formData.stock),
+            };
+
+            console.log(
+                "========== CREATE PRODUCT =========="
+            );
+            console.log("Product data:", productData);
+
+            const response = await api.post(
+                "/products",
+                productData
+            );
+
+            console.log(
+                "Product created:",
+                response.data
+            );
+
+            toast.success("Product created successfully!");
+
+            router.push("/admin/products");
+            router.refresh();
+
+        } catch (error: any) {
+            console.error(
+                "========== CREATE PRODUCT ERROR =========="
+            );
+
+            console.error(
+                "Status:",
+                error.response?.status
+            );
+
+            console.error(
+                "Response:",
+                error.response?.data
+            );
+
+            console.error(
+                "Message:",
+                error.message
+            );
+
+            toast.error(
+                error.response?.data?.message ||
+                "Failed to create product"
+            );
+
+        } finally {
+            setSaving(false);
+        }
+    };
+    
     return (
         <>
             <div className="bg-white rounded-2xl shadow-sm border border-app-border overflow-hidden">
@@ -131,29 +261,41 @@ const page = () => {
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-zinc-700 mb-2">Product Image</label>
+                                <label className="block text-sm font-medium text-zinc-700 mb-2">
+                                    Product Image
+                                </label>
+
                                 <div className="flex items-center gap-4">
                                     {(imageFile || formData.image) && (
                                         <div className="size-16 rounded-lg border border-zinc-200 overflow-hidden shrink-0 bg-app-cream">
-                                            <Image 
-                                                src={imageFile ? URL.createObjectURL(imageFile) : formData.image} 
-                                                alt="Preview" 
+                                            <Image
+                                                src={
+                                                    imageFile
+                                                        ? URL.createObjectURL(imageFile)
+                                                        : formData.image
+                                                }
+                                                alt="Preview"
                                                 className="w-full h-full object-cover"
-                                                width={1}
-                                                height={1}
+                                                width={64}
+                                                height={64}
                                             />
                                         </div>
                                     )}
 
-                                    <input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        onChange={e => setImageFile(e.target.files?.[0] || null)} 
-                                        className="w-full px-4 py-2.5 rounded-lg border border-zinc-200 focus:border-app-green outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-app-orange file:text-white hover:file:bg-orange-600 cursor-pointer" 
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+
+                                            console.log("Selected file:", file);
+
+                                            setImageFile(file);
+                                        }}
+                                        className="w-full px-4 py-2.5 rounded-lg border border-zinc-200"
                                     />
                                 </div>
                             </div>
-
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-zinc-700 mb-2">Description</label>
                                 <textarea 

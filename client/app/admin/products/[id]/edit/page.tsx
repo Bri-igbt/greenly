@@ -2,15 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { ArrowLeftIcon } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { categoriesData, dummyProducts } from "@/assets/assets";
 import Link from "next/link";
 import Loader from "@/app/components/Loader";
 import Image from "next/image";
+import api from "@/config/api";
+import toast from "react-hot-toast";
 
 const page = () => {
     const { id } = useParams();
     const isEdit = Boolean(id);
+    const router = useRouter();
 
     const [loading, setLoading] = useState(isEdit);
     const [saving, setSaving] = useState(false);
@@ -30,9 +33,26 @@ const page = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            if (isEdit) {
-                setFormData(() => dummyProducts.find((p) => p.id === id) as any)
+            try {
+                if (isEdit) {
+                    const {data: prodData} = await api.get(`/products/${id}`);
+                    const p = prodData.product;
+                    setFormData({
+                        name: p.name,
+                        description: p.description,
+                        price: p.price.toString(),
+                        originalPrice: p.originalPrice ? p.originalPrice.toString() : "",
+                        image: p.image,
+                        category: p.category,
+                        unit: p.unit,
+                        stock: p.stock.toString(),
+                        isOrganic: p.isOrganic,
+                    })
+                }
+            } catch (error: any) {
+                toast.error(error.response?.data?.message || "Failed to load data")
             }
+
             setLoading(false)
         };
         fetchData();
@@ -40,6 +60,46 @@ const page = () => {
 
     const handleSubmit = async (e: React.SubmitEvent) => {
         e.preventDefault();
+        setSaving(true)
+        try {
+            let finalImageUrl = formData.image;
+            if (imageFile) {
+                const formDataUpload = new FormData();
+                formDataUpload.append("image", imageFile)
+                const {data} = await api.post("/upload", formDataUpload)
+                finalImageUrl = data.url;
+            }
+
+            if (!finalImageUrl){
+                toast.error("Please upload a product image")
+                setSaving(false)
+                return
+            }
+
+            const payload = {
+                ...formData,
+                image: finalImageUrl,
+                price: Number(formData.price),
+                originalPrice: formData.originalPrice ? Number(formData.originalPrice) : 0,
+                stock: Number(formData.stock),
+            }
+
+            if(isEdit) {
+                await api.put(`/products/${id}`, payload)
+                toast.success("Product updated successfully")
+            } else {
+                await api.put('/products', payload)
+                toast.success("Product created successfully")
+            }
+
+            router.push("/admin/products")
+
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || "Failed to save data")
+
+        } finally {
+            setSaving(false)
+        }
 
     };
 

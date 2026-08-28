@@ -152,12 +152,49 @@ export const getProduct = async (req: Request, res: Response) => {
 
 // POST
 // /api/products/:id
-export const createProduct = async (req:Request, res:Response) => {
-    const product = await prisma.product.create({
-        data: req.body
-    })
-    res.status(201).json({product})
-}
+export const createProduct = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        console.log("========== CREATE PRODUCT ==========");
+        console.log("Request body:", req.body);
+
+        const product = await prisma.product.create({
+            data: {
+                name: req.body.name,
+                description: req.body.description,
+                price: Number(req.body.price),
+                originalPrice:
+                    req.body.originalPrice !== null &&
+                    req.body.originalPrice !== undefined &&
+                    req.body.originalPrice !== ""
+                        ? Number(req.body.originalPrice)
+                        : null,
+                image: req.body.image,
+                category: req.body.category,
+                unit: req.body.unit,
+                stock: Number(req.body.stock),
+                isOrganic: Boolean(req.body.isOrganic),
+            },
+        });
+
+        console.log(
+            "Product created successfully:",
+            product.id
+        );
+
+        return res.status(201).json({
+            product,
+        });
+
+    } catch (error: any) {
+        return res.status(500).json({
+            message: "Failed to create product",
+            error: error.message,
+        });
+    }
+};
 
 // PUT
 // /api/products/:id
@@ -172,6 +209,9 @@ export const updateProduct = async (req: Request, res: Response) => {
 // DELETE
 // /api/products/:id
 export const deleteProduct = async (req: Request, res: Response) => {
-    await prisma.product.delete({ where: {id: req.params.id as string }})
-    res.json({message: "Deleted"})
+    await prisma.product.update({
+        where: {id: req.params.id as string },
+        data: { stock: Number(0)}
+    })
+    res.json({message: "Product Updated"})
 }
