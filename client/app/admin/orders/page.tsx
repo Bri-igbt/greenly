@@ -4,12 +4,8 @@ import { useState, useEffect } from "react";
 import { TruckIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { DeliveryPartner } from "@/app/types";
-import { dummyDashboardOrdersData, dummyDeliveryPartnerData } from "@/assets/assets";
 import Loader from "@/app/components/Loader";
 import api from "@/config/api";
-
-
-
 
 const page = () => {
 
@@ -35,7 +31,7 @@ const page = () => {
 
     const fetchPartners = async () => {
         try {
-            const {data} = await api.get("/admin/delivery-patners")
+            const {data} = await api.get("/admin/delivery-partners")
             setPartners(data.partners.filter((p: DeliveryPartner) => p.isActive))
             
         } catch (error: any) {

@@ -198,12 +198,15 @@ export const updateDeliveryPartners = async (
             });
         }
 
+        // Safely handle an empty/undefined request body
+        const body = req.body || {};
+
         const {
             name,
             phone,
             isActive,
             vehicleType,
-        } = req.body;
+        } = body;
 
         const data: {
             name?: string;
@@ -213,7 +216,15 @@ export const updateDeliveryPartners = async (
         } = {};
 
         if (name !== undefined) {
-            data.name = String(name).trim();
+            const trimmedName = String(name).trim();
+
+            if (!trimmedName) {
+                return res.status(400).json({
+                    message: "Name cannot be empty",
+                });
+            }
+
+            data.name = trimmedName;
         }
 
         if (phone !== undefined) {
@@ -221,11 +232,17 @@ export const updateDeliveryPartners = async (
         }
 
         if (vehicleType !== undefined) {
-            data.vehicleType = String(vehicleType);
+            data.vehicleType = String(vehicleType).trim();
         }
 
         if (isActive !== undefined) {
-            data.isActive = Boolean(isActive);
+            // Handle both boolean and string values correctly
+            if (typeof isActive === "string") {
+                data.isActive =
+                    isActive.toLowerCase() === "true";
+            } else {
+                data.isActive = Boolean(isActive);
+            }
         }
 
         if (Object.keys(data).length === 0) {
@@ -261,10 +278,15 @@ export const updateDeliveryPartners = async (
         } = partner;
 
         return res.status(200).json({
+            message: "Delivery partner updated successfully",
             partner: partnerData,
         });
+
     } catch (error: any) {
-        console.error("Update delivery partner error:", error);
+        console.error(
+            "Update delivery partner error:",
+            error
+        );
 
         return res.status(500).json({
             message: "Failed to update delivery partner",

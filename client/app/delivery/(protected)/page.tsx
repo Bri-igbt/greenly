@@ -8,10 +8,15 @@ import OtpModal from "@/app/components/delivery/OtpModal";
 import DeliveryOrderCard from "@/app/components/delivery/DeliveryOrderCard";
 import { Order } from "@/app/types";
 import Loader from "@/app/components/Loader";
+import axios from "axios";
+import toast from "react-hot-toast";
 
+const API_URL = process.env.NEXT_BASE_URL || "http://localhost:3000/api";
+const getAuthHeaders = ()=> ({
+    headers: {Authorization: `Bearer ${localStorage.getItem("delivery_token")}`}
+})
 
 const page = () => {
-
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState<"active" | "completed">("active");
@@ -24,8 +29,14 @@ const page = () => {
 
     const fetchOrders = async () => {
         setLoading(true);
-        setOrders(dummyDashboardOrdersData as any);
-        setLoading(false);
+        try {
+            const {data} = await axios.get(`${API_URL}/delivery/my-deliveries?status=${tab}`, getAuthHeaders());
+            setOrders(data.orders)
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Failed to load deliveries")
+        } finally {
+            setLoading(false)
+        }
     };
 
     useEffect(() => {
