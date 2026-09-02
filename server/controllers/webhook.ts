@@ -18,9 +18,6 @@ export const stripeWebhook = async (
 ) => {
     let event: Stripe.Event;
 
-    // --------------------------------------------------
-    // Verify Stripe webhook signature
-    // --------------------------------------------------
     if (endpointSecret) {
         const signature = request.headers["stripe-signature"];
 
@@ -60,19 +57,11 @@ export const stripeWebhook = async (
             "STRIPE_WEBHOOK_SECRET is not configured. Webhook signature verification is disabled."
         );
 
-        // Only use this if you intentionally want to accept
-        // unsigned webhook requests.
         event = request.body as Stripe.Event;
     }
 
     try {
-        // --------------------------------------------------
-        // Handle Stripe event
-        // --------------------------------------------------
         switch (event.type) {
-            // ==================================================
-            // PAYMENT SUCCEEDED
-            // ==================================================
             case "payment_intent.succeeded": {
                 const paymentIntent =
                     event.data.object as Stripe.PaymentIntent;
@@ -83,9 +72,6 @@ export const stripeWebhook = async (
                     `Payment succeeded: ${paymentIntentId}`
                 );
 
-                // --------------------------------------------------
-                // Find Checkout Session
-                // --------------------------------------------------
                 const sessions =
                     await stripe.checkout.sessions.list({
                         payment_intent: paymentIntentId,
@@ -118,9 +104,6 @@ export const stripeWebhook = async (
                     });
                 }
 
-                // --------------------------------------------------
-                // Find the order first
-                // --------------------------------------------------
                 const existingOrder = await prisma.order.findUnique({
                     where: {
                         id: orderId,
@@ -138,9 +121,6 @@ export const stripeWebhook = async (
                     });
                 }
 
-                // --------------------------------------------------
-                // Prevent duplicate stock updates
-                // --------------------------------------------------
                 if (existingOrder.isPaid) {
                     console.log(
                         `Order ${orderId} has already been marked as paid`
@@ -151,9 +131,6 @@ export const stripeWebhook = async (
                     });
                 }
 
-                // --------------------------------------------------
-                // Mark order as paid
-                // --------------------------------------------------
                 const paidOrder = await prisma.order.update({
                     where: {
                         id: orderId,
@@ -167,16 +144,10 @@ export const stripeWebhook = async (
                     `Order ${orderId} marked as paid`
                 );
 
-                // --------------------------------------------------
-                // Get order items
-                // --------------------------------------------------
                 const orderItems = Array.isArray(paidOrder.items)
                     ? paidOrder.items
                     : [];
 
-                // --------------------------------------------------
-                // Update product stock
-                // --------------------------------------------------
                 for (const item of orderItems) {
                     if (
                         !item ||
