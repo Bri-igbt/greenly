@@ -3,7 +3,6 @@
 import Loader from "@/app/components/Loader";
 import ProductCard from "@/app/components/ProductCard";
 import { Product } from "@/app/types";
-import { dummyProducts } from "@/assets/assets";
 import api from "@/config/api";
 import { Home, Search } from "lucide-react";
 import Link from "next/link";

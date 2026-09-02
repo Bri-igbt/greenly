@@ -5,7 +5,6 @@ import Loading from "@/app/components/Loading";
 import ProductCard from "@/app/components/ProductCard";
 import { useCart } from "@/app/context/CartContext";
 import { Product } from "@/app/types";
-import { dummyProducts } from "@/assets/assets";
 import api from "@/config/api";
 import { ArrowLeftIcon, ArrowRightIcon, HomeIcon, LeafIcon, MinusIcon, PlusIcon, ShoppingCartIcon, StarIcon } from "lucide-react";
 import Image from "next/image";

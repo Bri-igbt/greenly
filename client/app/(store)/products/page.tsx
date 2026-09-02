@@ -26,8 +26,6 @@ const ProductsPage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
-    // URL parameters
     const category = searchParams.get("category") || "";
     const search = searchParams.get("search") || "";
     const organic = searchParams.get("organic") || "";
@@ -36,31 +34,23 @@ const ProductsPage = () => {
     const minPrice = searchParams.get("minPrice") || "";
     const maxPrice = searchParams.get("maxPrice") || "";
 
-    // =========================
-    // FETCH PRODUCTS
-    // =========================
     const fetchProducts = async () => {
         setLoading(true);
 
         try {
             const params = new URLSearchParams();
-
-            // Category
             if (category && category !== "all") {
                 params.set("category", category);
             }
 
-            // Search
             if (search) {
                 params.set("search", search);
             }
 
-            // Organic
             if (organic) {
                 params.set("organic", organic);
             }
 
-            // Price
             if (minPrice) {
                 params.set("minPrice", minPrice);
             }
@@ -69,12 +59,10 @@ const ProductsPage = () => {
                 params.set("maxPrice", maxPrice);
             }
 
-            // Sort
             if (sort) {
                 params.set("sort", sort);
             }
 
-            // Pagination
             params.set("page", String(currentPage));
             params.set("limit", "12");
 
@@ -86,8 +74,6 @@ const ProductsPage = () => {
             const { data } = await api.get(
                 `/products?${params.toString()}`
             );
-
-            console.log("Products response:", data);
 
             setProducts(data.products || []);
             setTotalPages(data.pages || 1);
@@ -107,9 +93,6 @@ const ProductsPage = () => {
         }
     };
 
-    // =========================
-    // UPDATE FILTER
-    // =========================
     const updateFilter = (
         key: string,
         value: string
@@ -124,7 +107,6 @@ const ProductsPage = () => {
             newParams.delete(key);
         }
 
-        // Reset page when changing filters
         if (key !== "page") {
             newParams.delete("page");
         }
@@ -138,9 +120,6 @@ const ProductsPage = () => {
         );
     };
 
-    // =========================
-    // CLEAR FILTERS
-    // =========================
     const clearFilters = () => {
         const params = new URLSearchParams(
             searchParams.toString()
@@ -163,9 +142,6 @@ const ProductsPage = () => {
         );
     };
 
-    // =========================
-    // ACTIVE CATEGORY
-    // =========================
     const activeCategory = categoriesData.find(
         (c) => c.slug === category
     );
@@ -178,9 +154,6 @@ const ProductsPage = () => {
         Boolean(maxPrice) ||
         Boolean(sort);
 
-    // =========================
-    // FETCH WHEN URL CHANGES
-    // =========================
     useEffect(() => {
         fetchProducts();
     }, [
@@ -218,10 +191,6 @@ const ProductsPage = () => {
                 </nav>
 
                 <div className="flex gap-8 xl:gap-10">
-
-                    {/* =========================
-                        DESKTOP FILTER
-                    ========================= */}
                     <aside className="hidden lg:block w-64 shrink-0">
                         <div className="bg-white rounded-2xl p-4 sticky top-24">
                             <FilterPanel
@@ -237,14 +206,9 @@ const ProductsPage = () => {
                         </div>
                     </aside>
 
-                    {/* =========================
-                        MAIN CONTENT
-                    ========================= */}
                     <main className="flex-1">
-
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">
-
                             <div>
                                 <h1 className="text-2xl font-semibold text-app-green">
                                     {activeCategory
@@ -260,7 +224,6 @@ const ProductsPage = () => {
                             </div>
 
                             <div className="flex flex-col lg:items-center gap-3">
-
                                 {/* Mobile filter button */}
                                 <button
                                     onClick={() =>
@@ -310,9 +273,6 @@ const ProductsPage = () => {
                             </div>
                         </div>
 
-                        {/* =========================
-                            PRODUCTS
-                        ========================= */}
                         {loading ? (
                             <Loading />
                         ) : products.length === 0 ? (
@@ -346,9 +306,6 @@ const ProductsPage = () => {
                             </div>
                         )}
 
-                        {/* =========================
-                            PAGINATION
-                        ========================= */}
                         {totalPages > 1 && (
                             <div className="mt-16 flex justify-center items-center gap-2">
 
@@ -384,9 +341,6 @@ const ProductsPage = () => {
                 </div>
             </div>
 
-            {/* =========================
-                MOBILE FILTERS
-            ========================= */}
             {mobileFiltersOpen && (
                 <>
                     {/* Overlay */}

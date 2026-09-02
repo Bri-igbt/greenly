@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { PackageIcon, UsersIcon, ShoppingBagIcon, AlertTriangleIcon } from "lucide-react";
-import Loading from "../../components/Loading";
-import { dummyAdminDashboardData, statusColors } from "../../assets/assets";
+import { dummyAdminDashboardData } from "@/assets/assets";
+import Loading from "@/app/components/Loading";
+import { statusColors } from "@/app/utils/data";
+
+
 
 interface Stats {
     totalOrders: number;
@@ -14,7 +17,7 @@ interface Stats {
 
 export default function AdminDashboard() {
 
-    const currency = import.meta.env.VITE_CURRENCY_SYMBOL || "$";
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
 
     const [stats, setStats] = useState<Stats | null>(null);
     const [loading, setLoading] = useState(true);

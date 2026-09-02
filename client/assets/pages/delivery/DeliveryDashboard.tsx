@@ -3,9 +3,9 @@ import { PackageIcon, NavigationIcon } from "lucide-react";
 import OtpModal from "../../components/Delivery/OtpModal";
 import CancelModal from "../../components/Delivery/CancelModal";
 import DeliveryOrderCard from "../../components/Delivery/DeliveryOrderCard";
-import Loading from "../../components/Loading";
 import type { Order } from "../../types";
-import { dummyDashboardOrdersData } from "../../assets/assets";
+import { dummyDashboardOrdersData } from "@/assets/assets";
+import Loading from "@/app/components/Loading";
 
 export default function DeliveryDashboard() {
 

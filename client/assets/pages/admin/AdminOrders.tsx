@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { TruckIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import type { DeliveryPartner } from "../../types";
-import Loading from "../../components/Loading";
-import { dummyDashboardOrdersData, dummyDeliveryPartnerData } from "../../assets/assets";
+import { dummyDashboardOrdersData, dummyDeliveryPartnerData } from "@/assets/assets";
+import Loading from "@/app/components/Loading";
+
 
 export default function AdminOrders() {
 
-    const currency = import.meta.env.VITE_CURRENCY_SYMBOL || "$";
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
 
     const [orders, setOrders] = useState<any[]>([]);
     const [partners, setPartners] = useState<DeliveryPartner[]>([]);

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BikeIcon } from "lucide-react";
-import { heroSectionData } from "../../assets/assets";
+import { heroSectionData } from "@/assets/assets";
+import Image from "next/image";
 
 export default function DeliveryLogin() {
     const [email, setEmail] = useState("");
@@ -16,7 +17,7 @@ export default function DeliveryLogin() {
         <div className="min-h-screen flex">
             {/* Left Side */}
             <div className="hidden lg:flex lg:w-1/2 bg-app-green relative items-center justify-center">
-                <img src={heroSectionData.hero_image} alt="" className="absolute inset-0 object-cover h-full bg-center opacity-10" />
+                <Image src={heroSectionData.hero_image} alt="" className="absolute inset-0 object-cover h-full bg-center opacity-10" />
                 <div className="relative text-center px-12">
                     <h2 className="text-4xl font-semibold text-white mb-4">Delivery Partner Portal</h2>
                     <p className="text-white/60 font-serif text-xl max-w-sm mx-auto">Manage your deliveries and keep customers happy.</p>

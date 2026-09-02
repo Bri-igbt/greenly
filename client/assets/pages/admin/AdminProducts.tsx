@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { PlusIcon, EditIcon, XIcon } from "lucide-react";
 import type { Product } from "../../types";
-import Loading from "../../components/Loading";
-import { dummyProducts } from "../../assets/assets";
+import { dummyProducts } from "@/assets/assets";
+import Loading from "@/app/components/Loading";
+
 
 export default function AdminProducts() {
 
-    const currency = import.meta.env.VITE_CURRENCY_SYMBOL || "$";
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
 
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
