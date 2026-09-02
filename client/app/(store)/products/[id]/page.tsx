@@ -1,405 +1,231 @@
-"use client";
+'use client'
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import type { Product } from "@/app/types";
-import { categoriesData } from "@/assets/assets";
-import Link from "next/link";
-
-import {
-    ChevronDown,
-    Home,
-    SlidersHorizontal,
-    XIcon,
-} from "lucide-react";
-
-import ProductCard from "@/app/components/ProductCard";
+import DummyReviewsSection from "@/app/components/DummyReviewSection";
 import Loading from "@/app/components/Loading";
-import FilterPanel from "@/app/components/FilterPanel";
+import ProductCard from "@/app/components/ProductCard";
+import { useCart } from "@/app/context/CartContext";
+import { Product } from "@/app/types";
 import api from "@/config/api";
-import toast from "react-hot-toast";
+import { ArrowLeftIcon, ArrowRightIcon, HomeIcon, LeafIcon, MinusIcon, PlusIcon, ShoppingCartIcon, StarIcon } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 
-const ProductsPageContent = () => {
+import { useEffect, useState } from "react";
+
+const page = () => {
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
+    const {id} = useParams();
     const router = useRouter();
-    const searchParams = useSearchParams();
+    const {items, addToCart, updateQuantity, removeFromCart} = useCart()
 
-    const [products, setProducts] = useState<Product[]>([]);
-    const [totalPages, setTotalPages] = useState(1);
+    const [product, setProduct] = useState<Product | null>(null);
+    const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
-    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-
-    const category = searchParams.get("category") || "";
-    const search = searchParams.get("search") || "";
-    const organic = searchParams.get("organic") || "";
-    const sort = searchParams.get("sort") || "";
-
-    const currentPage =
-        Number(searchParams.get("page")) || 1;
-
-    const minPrice = searchParams.get("minPrice") || "";
-    const maxPrice = searchParams.get("maxPrice") || "";
-
-    const fetchProducts = async () => {
-        setLoading(true);
-
-        try {
-            const params = new URLSearchParams();
-
-            if (category && category !== "all") {
-                params.set("category", category);
-            }
-
-            if (search) {
-                params.set("search", search);
-            }
-
-            if (organic) {
-                params.set("organic", organic);
-            }
-
-            if (minPrice) {
-                params.set("minPrice", minPrice);
-            }
-
-            if (maxPrice) {
-                params.set("maxPrice", maxPrice);
-            }
-
-            if (sort) {
-                params.set("sort", sort);
-            }
-
-            params.set("page", String(currentPage));
-            params.set("limit", "12");
-
-            console.log(
-                "Fetching products:",
-                `/products?${params.toString()}`
-            );
-
-            const { data } = await api.get(
-                `/products?${params.toString()}`
-            );
-
-            setProducts(data.products || []);
-            setTotalPages(data.pages || 1);
-        } catch (error: any) {
-            console.error("Fetch products error:", error);
-
-            toast.error(
-                error?.response?.data?.message ||
-                    error?.message ||
-                    "Failed to fetch products"
-            );
-
-            setProducts([]);
-            setTotalPages(1);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const updateFilter = (
-        key: string,
-        value: string
-    ) => {
-        const newParams = new URLSearchParams(
-            searchParams.toString()
-        );
-
-        if (value) {
-            newParams.set(key, value);
-        } else {
-            newParams.delete(key);
-        }
-
-        if (key !== "page") {
-            newParams.delete("page");
-        }
-
-        const queryString = newParams.toString();
-
-        router.push(
-            queryString
-                ? `/products?${queryString}`
-                : "/products"
-        );
-    };
-
-    const clearFilters = () => {
-        const params = new URLSearchParams(
-            searchParams.toString()
-        );
-
-        params.delete("category");
-        params.delete("organic");
-        params.delete("minPrice");
-        params.delete("maxPrice");
-        params.delete("sort");
-        params.delete("search");
-        params.delete("page");
-
-        const queryString = params.toString();
-
-        router.push(
-            queryString
-                ? `/products?${queryString}`
-                : "/products"
-        );
-    };
-
-    const activeCategory = categoriesData.find(
-        (c) => c.slug === category
-    );
-
-    const hasFilters =
-        Boolean(category) ||
-        Boolean(organic) ||
-        Boolean(search) ||
-        Boolean(minPrice) ||
-        Boolean(maxPrice) ||
-        Boolean(sort);
+    const [localQuantity, setLocalQunatity] = useState(1);
 
     useEffect(() => {
-        fetchProducts();
-    }, [
-        category,
-        search,
-        organic,
-        sort,
-        currentPage,
-        minPrice,
-        maxPrice,
-    ]);
+        setLoading(true);
+        setLocalQunatity(1);
+        window.scrollTo(0,0);
+        api.get(`/products/${id}`).then(({data}) => {
+            setProduct(data.product)
+            return api.get(`/products?category=${data.product.category}`)
+        }).then(({data}) =>{
+            setRelatedProducts(data.products.filter((p: Product) => p.id !== id))
+        }).catch(()=> router.push("/products")).finally(()=> setLoading(false))
+    }, [id, router])
+    
+    if(loading) return <Loading />
+    if(!product) return null;
+
+    const cartItem = items.find((item)=> item.product.id === product.id)
+    const isCart = !!cartItem;
+    const displayQuantity = isCart ? cartItem.quantity : localQuantity;
+    const categoryLabel = product.category.replace(/-/g, " ");
+
+    const handleMinus = () => {
+        if(isCart) {
+            if(cartItem.quantity > 1) updateQuantity(product.id, cartItem.quantity - 1)
+                else removeFromCart(product.id)
+        } else {
+            setLocalQunatity(Math.max(1, localQuantity - 1))
+        }     
+    }
+
+    const handlePlus = () => {
+        if(isCart) updateQuantity(product.id, cartItem.quantity + 1)
+            else setLocalQunatity(localQuantity + 1)
+    }
 
     return (
         <div className="min-h-screen bg-app-cream">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-
-                {/* Breadcrumb */}
                 <nav className="flex items-center gap-2 text-sm text-app-text-light mb-6">
-                    <Link
-                        href="/"
-                        className="hover:text-app-green transition-colors"
-                    >
-                        <Home className="size-4" />
+                    <Link href='/' className="hover:text-app-green transition-colors">
+                        <HomeIcon className="size-4" />
                     </Link>
-
                     <span>/</span>
-
-                    <span className="text-app-green font-medium">
-                        {activeCategory
-                            ? activeCategory.name
-                            : search
-                            ? `Search: ${search}`
-                            : "All Products"}
+                    <Link href='/product' className="hover:text-app-green transition-colors">
+                        Products
+                    </Link>
+                    <span>/</span>
+                    <Link href={`/products?category=${product.category}`} className="hover:text-app-green transition-colors capitalize">
+                        {categoryLabel}
+                    </Link>
+                    <span>/</span>
+                    <span className="text-app-green font-medium truncate max-w-[200px]">
+                        {product.name}
                     </span>
                 </nav>
 
-                <div className="flex gap-8 xl:gap-10">
+                <button 
+                    onClick={() => router.back()}
+                    className="mb-6 flex items-center gap-1.5 text-sm text-app-text-light hover:text-app-green transition-colors"
+                >
+                    <ArrowLeftIcon className="size-4" />
+                    Back
+                </button>
 
-                    {/* Desktop Filters */}
-                    <aside className="hidden lg:block w-64 shrink-0">
-                        <div className="bg-white rounded-2xl p-4 sticky top-24">
-                            <FilterPanel
-                                categories={categoriesData}
-                                category={category}
-                                organic={organic}
-                                minPrice={minPrice}
-                                maxPrice={maxPrice}
-                                updateFilter={updateFilter}
-                                clearFilter={clearFilters}
-                                hasFilter={hasFilters}
+                <div className="bg-white/50 rounded-2xl overflow-hidden">
+                    <div className="grid md:grid-cols-2 gap-0">
+                        <div className="relative flex-center p-8 md:p-12 min-h-[320px] md:min-h-[480px]">
+                            <Image 
+                                src={product.image} 
+                                alt={product.name} 
+                                className="max-h-[360px] w-auto object-contain" 
+                                width={1}
+                                height={1}
                             />
-                        </div>
-                    </aside>
 
-                    <main className="flex-1">
+                            <div className="absolute top-5 left-5 flex flex-wrap gap-1.5">
+                                {product.isOrganic && (
+                                    <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-app-green text-white rounded-full">
+                                        <LeafIcon className="w-3 h-3" />
+                                        Organic
+                                    </span>
+                                )}
 
-                        {/* Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h1 className="text-2xl font-semibold text-app-green">
-                                    {activeCategory
-                                        ? activeCategory.name
-                                        : search
-                                        ? `Search results for "${search}"`
-                                        : "All Products"}
-                                </h1>
-
-                                <p className="text-sm text-app-text-light mt-0.5">
-                                    {products.length} products found
-                                </p>
+                                {product.discount > 0 && (
+                                    <span className="flex items-center gap-1 px-2.5 py-1 text-xs font-semibold bg-app-orange text-white rounded-full">
+                                        {product.discount}% OFF
+                                    </span>
+                                )}
                             </div>
+                        </div>
 
-                            <div className="flex flex-col lg:items-center gap-3">
+                        <div className="p-6 md:p-10 flex flex-col justify-center">
+                            <span className="text-xs font-medium text-app-text-light tracking-wider mb-2 capitalize">
+                                {categoryLabel}
+                            </span>
 
-                                {/* Mobile filter button */}
-                                <button
-                                    onClick={() =>
-                                        setMobileFiltersOpen(true)
-                                    }
-                                    className="lg:hidden flex items-center gap-2 px-3 py-2 text-sm bg-white rounded-xl border border-app-border hover:bg-app-cream transition-colors"
-                                >
-                                    <SlidersHorizontal className="size-4" />
-                                    Filters
-                                </button>
+                            <h1 className="text-2xl md:text-3xl font-semibold text-app-green mb-3">
+                                {product.name}
+                            </h1>
 
-                                {/* Sort */}
-                                <div className="relative">
-                                    <select
-                                        value={sort}
-                                        onChange={(e) =>
-                                            updateFilter(
-                                                "sort",
-                                                e.target.value
-                                            )
-                                        }
-                                        className="appearance-none pl-3 pr-8 py-2 text-sm bg-white rounded-xl border border-app-border focus:border-app-green outline-none cursor-pointer"
-                                    >
-                                        <option value="">
-                                            Newest
-                                        </option>
-
-                                        <option value="price-low">
-                                            Price: Low → High
-                                        </option>
-
-                                        <option value="price-high">
-                                            Price: High → Low
-                                        </option>
-
-                                        <option value="rating">
-                                            Top Rated
-                                        </option>
-
-                                        <option value="name">
-                                            A → Z
-                                        </option>
-                                    </select>
-
-                                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-app-text-light pointer-events-none" />
+                            {product.rating > 0 && (
+                                <div className="flex items-center gap-2 mb-5">
+                                    <div className="flex items-center gap-0.5">
+                                        {[1,2,3,4,5].map((star) => (
+                                            <StarIcon 
+                                                key={star}
+                                                className={`w-4 h-4 ${star <= Math.round(product.rating) ? "text-app-warning fill-app-warning" : ""}`}
+                                            />
+                                        ))}
+                                    </div>
+                                    <span className="text-sm font-medium">{product.rating}</span>
+                                    <span className="text-sm text-app-text-light">({product.reviewCount} reviews)</span>
                                 </div>
+                            )}
+
+                            <div className="flex items-baseline gap-3 mb-5">
+                                <span className="text-3xl md:text-4xl font-semibold text-app-green">
+                                    {currency}{product.price.toFixed(2)}
+                                </span>
+
+                                {product.originalPrice > product.price && (
+                                    <span className="line-through text-lg text-app-text-light">
+                                        {currency}{product.originalPrice.toFixed(2)}
+                                    </span>
+                                )}
                             </div>
-                        </div>
 
-                        {/* Products */}
-                        {loading ? (
-                            <Loading />
-                        ) : products.length === 0 ? (
-                            <div className="text-center py-16">
-                                <p className="text-lg font-semibold mb-2 text-app-green">
-                                    No products found
-                                </p>
+                            <p className="text-sm text-app-text-light leading-relaxed mb-6">
+                                {product.description}
+                            </p>
 
-                                <p className="text-sm text-app-text-light mb-4">
-                                    Try adjusting your filters or search terms
-                                </p>
+                            <div className="mb-6">
+                                {product.stock > 0 ? (
+                                    <span className="text-sm text-app-success font-medium">
+                                        ✓ In Stock ({product.stock}) available
+                                    </span>
+                                ) : (
+                                    <span className="text-sm text-app-error font-medium">
+                                        Out of Stock
+                                    </span>
+                                )}
+                            </div>
 
-                                <button
-                                    onClick={clearFilters}
-                                    className="px-5 py-2 text-sm font-medium bg-app-green text-white rounded-xl hover:bg-app-green-light transition-colors"
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center border border-app-border rounded-xl overflow-hidden">
+                                    <button onClick={handleMinus} className="p-3 hover:bg-app-cream transition-colors">
+                                        <MinusIcon className="w-4 h-4" />
+                                    </button>
+                                    <span className="px-5 text-sm font-semibold min-w-[40px] text-center">
+                                        {displayQuantity}
+                                    </span>
+                                    <button onClick={handlePlus} className="p-3 hover:bg-app-cream transition-colors">
+                                        <PlusIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                <button 
+                                    disabled={product.stock === 0}
+                                    onClick={()=> {
+                                        if(!isCart) addToCart(product, localQuantity)
+                                    }}
+                                    className={`flex-1 py-3 font-semibold rounded-xl transition-colors flex-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] ${isCart ? "bg-app-cream text-app-green border border-app-border" : "bg-app-orange text-white hover:bg-app-orange-dark"}`}
                                 >
-                                    Clear Filters
+                                    <ShoppingCartIcon className="w-4 h-4" />
+                                    {isCart ? "Added to Cart" : "Add to Cart"}
                                 </button>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 xl:gap-8">
-                                {products.map((product) => (
-                                    <ProductCard
-                                        key={product.id}
-                                        product={product}
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <div className="mt-16 flex justify-center items-center gap-2">
-                                {Array.from({
-                                    length: totalPages,
-                                }).map((_, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => {
-                                            updateFilter(
-                                                "page",
-                                                String(i + 1)
-                                            );
-
-                                            window.scrollTo({
-                                                top: 0,
-                                                behavior: "smooth",
-                                            });
-                                        }}
-                                        className={`size-9 rounded-lg text-sm font-medium transition-colors ${
-                                            currentPage === i + 1
-                                                ? "bg-app-green text-white"
-                                                : "bg-white text-app-text-light hover:bg-app-cream"
-                                        }`}
-                                    >
-                                        {i + 1}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </main>
-                </div>
-            </div>
-
-            {/* Mobile Filters */}
-            {mobileFiltersOpen && (
-                <>
-                    {/* Overlay */}
-                    <div
-                        onClick={() =>
-                            setMobileFiltersOpen(false)
-                        }
-                        className="fixed inset-0 bg-black/40 z-50"
-                    />
-
-                    {/* Panel */}
-                    <div className="fixed bottom-0 left-0 right-0 bg-white z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto animate-slide-in-up">
-
-                        <div className="flex items-center justify-between p-4 border-b border-app-border">
-                            <h3 className="text-lg font-semibold text-app-green">
-                                Filters
-                            </h3>
-
-                            <button
-                                onClick={() =>
-                                    setMobileFiltersOpen(false)
-                                }
-                                className="p-2 hover:bg-app-cream rounded-lg"
-                            >
-                                <XIcon className="size-5" />
-                            </button>
-                        </div>
-
-                        <div className="p-4">
-                            <FilterPanel
-                                categories={categoriesData}
-                                category={category}
-                                organic={organic}
-                                minPrice={minPrice}
-                                maxPrice={maxPrice}
-                                updateFilter={updateFilter}
-                                clearFilter={clearFilters}
-                                hasFilter={hasFilters}
-                            />
                         </div>
                     </div>
-                </>
-            )}
-        </div>
-    );
-};
+                </div>
 
-export default function ProductsPage() {
-    return (
-        <Suspense fallback={<Loading />}>
-            <ProductsPageContent />
-        </Suspense>
-    );
+                {product.reviewCount > 0 && 
+                    <DummyReviewsSection product={product} /> 
+                }
+
+
+                {relatedProducts.length > 0 && (
+                    <section className="mt-12 mb-44">
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h2 className="text-2xl font-semibold text-app-green">Related Products</h2>
+                                <p className="text-sm text-app-text-light mt-1">More from {categoryLabel}</p>
+                            </div>
+
+                            <Link 
+                                href={`/products?category=${product.category}`}
+                                className="text-sm font-semibold text-app-orange hover:text-app-orange-dark flex items-center gap-1 transition-colors"
+                            >
+                                View All
+                                <ArrowRightIcon className="size-4" />
+                            </Link>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 xl:gap-8"> 
+                            {relatedProducts.slice(0,5).map((rp)=> (
+                                <ProductCard key={rp.id} product={rp} />
+                            ))}
+                        </div>
+                    </section>
+                )}
+            </div>
+        </div>
+    )
 }
+
+export default page

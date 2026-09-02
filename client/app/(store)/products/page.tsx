@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Product } from "@/app/types";
 import { categoriesData } from "@/assets/assets";
 import Link from "next/link";
+
 import {
     ChevronDown,
     Home,
@@ -18,7 +19,7 @@ import FilterPanel from "@/app/components/FilterPanel";
 import api from "@/config/api";
 import toast from "react-hot-toast";
 
-const ProductsPage = () => {
+const ProductsPageContent = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -26,11 +27,15 @@ const ProductsPage = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
     const category = searchParams.get("category") || "";
     const search = searchParams.get("search") || "";
     const organic = searchParams.get("organic") || "";
     const sort = searchParams.get("sort") || "";
-    const currentPage = Number(searchParams.get("page")) || 1;
+
+    const currentPage =
+        Number(searchParams.get("page")) || 1;
+
     const minPrice = searchParams.get("minPrice") || "";
     const maxPrice = searchParams.get("maxPrice") || "";
 
@@ -39,6 +44,7 @@ const ProductsPage = () => {
 
         try {
             const params = new URLSearchParams();
+
             if (category && category !== "all") {
                 params.set("category", category);
             }
@@ -191,6 +197,8 @@ const ProductsPage = () => {
                 </nav>
 
                 <div className="flex gap-8 xl:gap-10">
+
+                    {/* Desktop Filters */}
                     <aside className="hidden lg:block w-64 shrink-0">
                         <div className="bg-white rounded-2xl p-4 sticky top-24">
                             <FilterPanel
@@ -207,6 +215,7 @@ const ProductsPage = () => {
                     </aside>
 
                     <main className="flex-1">
+
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">
                             <div>
@@ -224,6 +233,7 @@ const ProductsPage = () => {
                             </div>
 
                             <div className="flex flex-col lg:items-center gap-3">
+
                                 {/* Mobile filter button */}
                                 <button
                                     onClick={() =>
@@ -273,11 +283,11 @@ const ProductsPage = () => {
                             </div>
                         </div>
 
+                        {/* Products */}
                         {loading ? (
                             <Loading />
                         ) : products.length === 0 ? (
                             <div className="text-center py-16">
-
                                 <p className="text-lg font-semibold mb-2 text-app-green">
                                     No products found
                                 </p>
@@ -295,20 +305,18 @@ const ProductsPage = () => {
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 xl:gap-8">
-
                                 {products.map((product) => (
                                     <ProductCard
                                         key={product.id}
                                         product={product}
                                     />
                                 ))}
-
                             </div>
                         )}
 
+                        {/* Pagination */}
                         {totalPages > 1 && (
                             <div className="mt-16 flex justify-center items-center gap-2">
-
                                 {Array.from({
                                     length: totalPages,
                                 }).map((_, i) => (
@@ -334,13 +342,13 @@ const ProductsPage = () => {
                                         {i + 1}
                                     </button>
                                 ))}
-
                             </div>
                         )}
                     </main>
                 </div>
             </div>
 
+            {/* Mobile Filters */}
             {mobileFiltersOpen && (
                 <>
                     {/* Overlay */}
@@ -355,7 +363,6 @@ const ProductsPage = () => {
                     <div className="fixed bottom-0 left-0 right-0 bg-white z-50 rounded-t-2xl max-h-[80vh] overflow-y-auto animate-slide-in-up">
 
                         <div className="flex items-center justify-between p-4 border-b border-app-border">
-
                             <h3 className="text-lg font-semibold text-app-green">
                                 Filters
                             </h3>
@@ -389,4 +396,10 @@ const ProductsPage = () => {
     );
 };
 
-export default ProductsPage;
+export default function ProductsPage() {
+    return (
+        <Suspense fallback={<Loading />}>
+            <ProductsPageContent />
+        </Suspense>
+    );
+}
