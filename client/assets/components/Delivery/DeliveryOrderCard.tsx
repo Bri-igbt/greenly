@@ -1,6 +1,6 @@
 import { CheckCircleIcon, ClockIcon, MapPinIcon, PhoneIcon, TruckIcon, XCircleIcon } from 'lucide-react'
 import type { Order } from '../../types'
-import { statusColors } from '../../assets/assets';
+import { statusColors } from '@/app/utils/data';
 
 interface DeliveryOrderCardProps {
     order: Order;
@@ -12,7 +12,7 @@ interface DeliveryOrderCardProps {
 
 export default function DeliveryOrderCard({ order, tab, handleUpdateStatus, setOtpModal, setCancelModal }: DeliveryOrderCardProps) {
 
-    const currency = import.meta.env.VITE_CURRENCY_SYMBOL || "$";
+    const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || "$";
 
     const user = typeof order.user === "object" ? order.user : { name: "Customer", email: "", phone: "" };
 
