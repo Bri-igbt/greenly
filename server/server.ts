@@ -1,5 +1,4 @@
 import "dotenv/config";
-
 import express, {
     NextFunction,
     Request,
@@ -25,6 +24,13 @@ import { stripeWebhook } from "./controllers/webhook";
 const app = express();
 
 const port = process.env.PORT || 5000;
+
+/*
+|--------------------------------------------------------------------------
+| CORS
+|--------------------------------------------------------------------------
+*/
+
 const allowedOrigins = [
     "http://localhost:3000",
     "https://greenlygroceries.vercel.app",
@@ -33,6 +39,7 @@ const allowedOrigins = [
 app.use(
     cors({
         origin: (origin, callback) => {
+            // Allow requests without an Origin header
             if (!origin) {
                 return callback(null, true);
             }
@@ -44,7 +51,9 @@ app.use(
             console.log("CORS BLOCKED:", origin);
 
             return callback(
-                new Error(`Origin ${origin} not allowed by CORS`)
+                new Error(
+                    `Origin ${origin} not allowed by CORS`
+                )
             );
         },
 
@@ -63,10 +72,14 @@ app.use(
         ],
 
         credentials: true,
-
-        optionsSuccessStatus: 204,
     })
 );
+
+/*
+|--------------------------------------------------------------------------
+| Stripe Webhook
+|--------------------------------------------------------------------------
+*/
 
 app.post(
     "/api/stripe",
@@ -75,22 +88,48 @@ app.post(
     }),
     stripeWebhook
 );
+
+/*
+|--------------------------------------------------------------------------
+| Body Parsers
+|--------------------------------------------------------------------------
+*/
+
 app.use(express.json());
+
 app.use(
     express.urlencoded({
         extended: true,
     })
 );
+
+/*
+|--------------------------------------------------------------------------
+| Health Check
+|--------------------------------------------------------------------------
+*/
+
 app.get("/", (req: Request, res: Response) => {
     res.json({
         success: true,
         message: "Server is Live!",
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
+
 app.use("/api/auth", authRoutes);
+
 app.use("/api/products", productRouter);
+
 app.use("/api/upload", uplaodRouter);
+
 app.use("/api/orders", orderRouter);
+
 app.use(
     "/api/inngest",
     serve({
@@ -98,9 +137,19 @@ app.use(
         functions,
     })
 );
+
 app.use("/api/addresses", addressRouter);
+
 app.use("/api/delivery", deliveryPartnerRouter);
+
 app.use("/api/admin", adminRouter);
+
+/*
+|--------------------------------------------------------------------------
+| Error Handler
+|--------------------------------------------------------------------------
+*/
+
 app.use(
     (
         error: any,
@@ -118,8 +167,19 @@ app.use(
         });
     }
 );
-app.listen(port, () => {
-    console.log(
-        `Server is running on port ${port}`
-    );
-});
+
+/*
+|--------------------------------------------------------------------------
+| Local Development
+|--------------------------------------------------------------------------
+*/
+
+if (process.env.NODE_ENV !== "production") {
+    app.listen(port, () => {
+        console.log(
+            `Server is running on http://localhost:${port}`
+        );
+    });
+}
+
+export default app;
