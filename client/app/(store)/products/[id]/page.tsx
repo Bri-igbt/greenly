@@ -5,7 +5,6 @@ import Loading from "@/app/components/Loading";
 import ProductCard from "@/app/components/ProductCard";
 import { useCart } from "@/app/context/CartContext";
 import { Product } from "@/app/types";
-import { dummyProducts } from "@/assets/assets";
 import api from "@/config/api";
 import { ArrowLeftIcon, ArrowRightIcon, HomeIcon, LeafIcon, MinusIcon, PlusIcon, ShoppingCartIcon, StarIcon } from "lucide-react";
 import Image from "next/image";
@@ -33,14 +32,22 @@ const page = () => {
             setLocalQunatity(1);
             window.scrollTo(0, 0);
 
+            // eslint-disable-next-line no-console
+            console.log("[ProductPage] id from useParams():", id, typeof id);
+            // eslint-disable-next-line no-console
+            console.log("[ProductPage] baseURL being used:", api.defaults.baseURL);
+            // eslint-disable-next-line no-console
+            console.log("[ProductPage] about to call:", `${api.defaults.baseURL}/products/${id}`);
+
             try {
                 // Get the main product
                 const { data } = await api.get(`/products/${id}`);
 
-                console.log("Product response:", data);
+                // eslint-disable-next-line no-console
+                console.log("[ProductPage] Product response OK:", data);
 
                 if (!data?.product) {
-                    console.error("Product not found in response");
+                    console.error("[ProductPage] Product not found in response body:", data);
                     router.push("/products");
                     return;
                 }
@@ -60,7 +67,7 @@ const page = () => {
                     );
                 } catch (relatedError) {
                     console.error(
-                        "Failed to fetch related products:",
+                        "[ProductPage] Failed to fetch related products:",
                         relatedError
                     );
 
@@ -69,10 +76,20 @@ const page = () => {
                     setRelatedProducts([]);
                 }
             } catch (error: any) {
-                console.error("Failed to fetch product:", error);
-
-                console.error("Status:", error?.response?.status);
-                console.error("Response:", error?.response?.data);
+                // eslint-disable-next-line no-console
+                console.error("[ProductPage] Failed to fetch product. Full error object:", error);
+                // eslint-disable-next-line no-console
+                console.error("[ProductPage] error.message:", error?.message);
+                // eslint-disable-next-line no-console
+                console.error("[ProductPage] error.code:", error?.code);
+                // eslint-disable-next-line no-console
+                console.error("[ProductPage] Status:", error?.response?.status);
+                // eslint-disable-next-line no-console
+                console.error("[ProductPage] Response data:", error?.response?.data);
+                // eslint-disable-next-line no-console
+                console.error("[ProductPage] Request config url:", error?.config?.url);
+                // eslint-disable-next-line no-console
+                console.error("[ProductPage] Request config baseURL:", error?.config?.baseURL);
 
                 setProduct(null);
                 router.push("/products");
