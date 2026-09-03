@@ -5,6 +5,7 @@ import Loading from "@/app/components/Loading";
 import ProductCard from "@/app/components/ProductCard";
 import { useCart } from "@/app/context/CartContext";
 import { Product } from "@/app/types";
+import { dummyProducts } from "@/assets/assets";
 import api from "@/config/api";
 import { ArrowLeftIcon, ArrowRightIcon, HomeIcon, LeafIcon, MinusIcon, PlusIcon, ShoppingCartIcon, StarIcon } from "lucide-react";
 import Image from "next/image";
@@ -25,16 +26,63 @@ const page = () => {
     const [localQuantity, setLocalQunatity] = useState(1);
 
     useEffect(() => {
-        setLoading(true);
-        setLocalQunatity(1);
-        window.scrollTo(0,0);
-        api.get(`/products/${id}`).then(({data}) => {
-            setProduct(data.product)
-            return api.get(`/products?category=${data.product.category}`)
-        }).then(({data}) =>{
-            setRelatedProducts(data.products.filter((p: Product) => p.id !== id))
-        }).catch(()=> router.push("/products")).finally(()=> setLoading(false))
-    }, [id, router])
+        if (!id) return;
+
+        const fetchProduct = async () => {
+            setLoading(true);
+            setLocalQunatity(1);
+            window.scrollTo(0, 0);
+
+            try {
+                // Get the main product
+                const { data } = await api.get(`/products/${id}`);
+
+                console.log("Product response:", data);
+
+                if (!data?.product) {
+                    console.error("Product not found in response");
+                    router.push("/products");
+                    return;
+                }
+
+                setProduct(data.product);
+
+                // Get related products separately
+                try {
+                    const relatedResponse = await api.get(
+                        `/products?category=${data.product.category}`
+                    );
+
+                    setRelatedProducts(
+                        (relatedResponse.data?.products || []).filter(
+                            (p: Product) => p.id !== id
+                        )
+                    );
+                } catch (relatedError) {
+                    console.error(
+                        "Failed to fetch related products:",
+                        relatedError
+                    );
+
+                    // Do NOT redirect the user.
+                    // The main product can still be displayed.
+                    setRelatedProducts([]);
+                }
+            } catch (error: any) {
+                console.error("Failed to fetch product:", error);
+
+                console.error("Status:", error?.response?.status);
+                console.error("Response:", error?.response?.data);
+
+                setProduct(null);
+                router.push("/products");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProduct();
+    }, [id, router]);
     
     if(loading) return <Loading />
     if(!product) return null;
@@ -66,7 +114,7 @@ const page = () => {
                         <HomeIcon className="size-4" />
                     </Link>
                     <span>/</span>
-                    <Link href='/product' className="hover:text-app-green transition-colors">
+                    <Link href='/products' className="hover:text-app-green transition-colors">
                         Products
                     </Link>
                     <span>/</span>
